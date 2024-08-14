@@ -23,7 +23,7 @@
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/password-reset-portal.git
+   git clone https://github.com/samarth-sh/DBA-SelfService.git
    cd password-reset-portal
    ```
 ### Running the Application
