@@ -48,7 +48,7 @@
     - Navigate to the `backend` directory:
 
       ```bash
-      cd backend
+      cd go-backend/
       ```
 
     - Install dependencies and start the server:
@@ -62,10 +62,10 @@
 
 2. **Frontend**:
 
-    - Navigate to the `frontend` directory:
+    - Navigate to the `sveltekit-frontend` directory:
 
       ```bash
-      cd frontend
+      cd sveltekit-frontend/
       ```
 
     - Install dependencies and start the development server:
