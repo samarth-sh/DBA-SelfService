@@ -33,7 +33,8 @@
 1. **Build and run**:
 
     ```bash
-    docker-compose up --build
+    docker-compose build --no-cache
+    docker-compose up
     ```
 
 2. **Access the application**:
