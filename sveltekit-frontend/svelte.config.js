@@ -14,7 +14,9 @@ const config = {
 		//configure to run on port 5173
 		//adapter: adapter({port: 5173})
 		adapter: adapter({
-			port: 5173,
+			env: {
+				port: process.env.PORT || 5173
+			}
 		})
 	}
 };

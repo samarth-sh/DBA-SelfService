@@ -40,6 +40,7 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to decode request", err.Error())
         return
     }
+    log.Printf("Received: Username: %s, ServerIP: %s", request.Username, request.ServerIP)
 
     // // Check if the server IP is valid and of the format 10.xxx.xxx.xxx
     // if !regexp.MustCompile(`^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$`).MatchString(request.ServerIP) {
@@ -51,6 +52,7 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
 
     //Check if the user exists in the database and retrieve the password
     var checkPass string
+    log.Println("Checking if user exists in the database")
     err := db.QueryRow("SELECT password FROM users WHERE username = ?", request.Username).Scan(&checkPass)
     if err == sql.ErrNoRows {
         // http.Error(w, "User not found", http.StatusNotFound)
@@ -63,7 +65,10 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to query database", err.Error())
         return
     }
+    log.Println("User exists in the database")
 
+    log.Printf("Password in the database: %s", checkPass)
+    log.Printf("Checking if password matches the one in the database")
     //Check if password matches the one in the database
     if request.OldPassword != checkPass {
         // http.Error(w, "Invalid password", http.StatusUnauthorized)
@@ -71,7 +76,9 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid password", "Old password does not match the one in the database")
         return
     }
+    log.Println("Password matches the one in the database")
 
+    log.Println("Checking if the server IP matches the one in the database")
     //Check if the server IP matches the one in the database
     var checkServerIP string
     err = db.QueryRow("SELECT serverIP FROM users WHERE username = ?", request.Username).Scan(&checkServerIP)
@@ -87,7 +94,9 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid server IP", "Server IP does not match the one in the database")
         return
     }
+    log.Println("Server IP matches the one in the database")
 
+    log.Println("Updating password")
     //Update password
     newPass := request.NewPassword
     _, err = db.Exec("UPDATE users SET password = ? WHERE username = ? AND serverIP = ?", newPass, request.Username, request.ServerIP)
@@ -97,6 +106,7 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to update password", err.Error())
         return
     }
+    log.Println("Password updated")
     sendSuccessResponse(w, "Password updated")
     logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Success", "Password updated successfully")
 }
@@ -106,9 +116,12 @@ var db *sql.DB
 var logDB *sql.DB
 
 func main() {
+    log.Println("Starting server...")
 
     r := mux.NewRouter()
     r.HandleFunc("/update-password", updatePassword).Methods("PUT")
+
+    log.Println("Registered /update-password route")
 
     c := cors.New(cors.Options{
         AllowedOrigins:   []string{"http://localhost:5173"},
@@ -121,6 +134,7 @@ func main() {
     initDB()
     initLogDB()
     defer db.Close()
+    defer logDB.Close()
 
     log.Println("Server is running on port 8080")
     http.ListenAndServe(":8080", handler)
@@ -130,8 +144,9 @@ func initDB() {
     var err error
     db, err = sql.Open("sqlite3", "./users.db")
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Failed to open database: ", err)
     }
+    log.Println("Database opened successfully")
     _, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL,
@@ -139,14 +154,15 @@ func initDB() {
         serverIP TEXT NOT NULL
     )`)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Failed to create users table: ", err)
     }
+    log.Println("Users table created successfully")
 }
 func initLogDB() {
     var err error
     logDB, err = sql.Open("sqlite3", "./logs.db")
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Failed to open database: ", err)
     }
     _, err = logDB.Exec(`CREATE TABLE IF NOT EXISTS logs (
         request_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,8 +174,9 @@ func initLogDB() {
         request_time DATETIME DEFAULT CURRENT_TIMESTAMP
     )`)
     if err != nil {
-        log.Fatal(err)
+        log.Fatal("Failed to create logs table: ", err)
     }
+    log.Println("Logs table created successfully")
 }
 func logPasswordUpdate(requestType, username, serverIP, requestStatus, message string) {
     _, err := logDB.Exec("INSERT INTO logs (request_type, username, serverIP, request_status, message) VALUES (?, ?, ?, ?, ?)", requestType, username, serverIP, requestStatus, message)

@@ -61,6 +61,7 @@
                 serverIP
             })
         });
+        console.log('Sending request:', { username, oldPassword, newPassword, serverIP });
         const result = await response.json();
         if (!response.ok) {
             if(result.error){
@@ -83,7 +84,6 @@
     </script>
     
 <main>
-
     <div class="inputform">  
         <div class="headers">
             <h1>DBA Self Service</h1>
@@ -98,79 +98,80 @@
                 <p id="message" class="success">{successMessage}</p>
             {/if}
         </div>
-        <form on:submit|preventDefault={updatePassword}>
-        
-        <label for="username">Username</label>
-        <input id="username" bind:value={username} placeholder="Enter your username" required>
-           
-        <label for="serverIP">Server IP</label>
-        <input id="serverIP" bind:value={serverIP} placeholder="Enter Server IP (10.xxx.xxx.xxx)" required>
+        <div class="page-content">
+            <form on:submit|preventDefault={updatePassword}>
             
-        <label for="oldPassword">Old Password</label>
+            <label for="username">Username</label>
+            <input id="username" bind:value={username} placeholder="Enter your username" required>
+            
+            <label for="serverIP">Server IP</label>
+            <input id="serverIP" bind:value={serverIP} placeholder="Enter Server IP (10.xxx.xxx.xxx)" required>
+                
+            <label for="oldPassword">Current Password</label>
             {#if showPassword}
-            <input
-            type="text"
-            id="oldPassword"
-            bind:value={oldPassword}
-            placeholder="Enter your old password"
-            />
+                <input
+                type="text"
+                id="oldPassword"
+                bind:value={oldPassword}
+                placeholder="Enter your current password"
+                />
             {:else}
-            <input
-            type="password"
-            id="oldPassword"
-            bind:value={oldPassword}
-            placeholder="Enter your old password"
-            />
+                <input
+                type="password"
+                id="oldPassword"
+                bind:value={oldPassword}
+                placeholder="Enter your current password"
+                />
             {/if}
 
             <label for="newPassword">New Password</label>
             {#if showPassword}
-            <input
-            type="text"
-            id="newPassword"
-            bind:value={newPassword}
-            placeholder="Enter your new password"
-            />
+                <input
+                type="text"
+                id="newPassword"
+                bind:value={newPassword}
+                placeholder="Enter your new password"
+                />
             {:else}
-            <input
-            type="password"
-            id="newPassword"
-            bind:value={newPassword}
-            placeholder="Enter your new password"
-            />
+                <input
+                type="password"
+                id="newPassword"
+                bind:value={newPassword}
+                placeholder="Enter your new password"
+                />
             {/if}
 
             <label for="confirmPassword">Confirm Password</label>
             {#if showPassword}
-            <input
-            type="text"
-            id="confirmPassword"
-            bind:value={confirmPassword}
-            placeholder="Re-type the new password"
-            />
+                <input
+                type="text"
+                id="confirmPassword"
+                bind:value={confirmPassword}
+                placeholder="Re-type the new password"
+                />
             {:else}
-            <input
-            type="password"
-            id="confirmPassword"
-            bind:value={confirmPassword}
-            placeholder="Re-type the new password"
-            />
+                <input
+                type="password"
+                id="confirmPassword"
+                bind:value={confirmPassword}
+                placeholder="Re-type the new password"
+                />
             {/if}
-           
+            
             <div class="checkbox">
                 <label>
-                <input
-                id="showPasswordBox"
-                type="checkbox"
-                bind:checked={showPassword}
-                on:change={togglePasswordVisibility}
-                />
-                Show Passwords
+                    <input
+                    id="showPasswordBox"
+                    type="checkbox"
+                    bind:checked={showPassword}
+                    on:change={togglePasswordVisibility}
+                    />
+                    Show Passwords
                 </label>
             </div>
-            <button id="upd" type="submit">Update Password</button>
-        </form>
-    </div>
+                <button id="upd" type="submit">Update Password</button>
+            </form>
+    
     <div class="password-requirements">
         <h4>Password Requirements</h4>
         <ul>
@@ -187,6 +188,8 @@
          <li>Password can contain the following special characters: @$#!%*?&</li>
          </ul>
     </div>
+</div>
+</div>
 </main>
     
 <style>
@@ -304,8 +307,33 @@
         font-size: 0.9rem;
         opacity: 0.8;
         font-style: italic;
-        max-width: 100%;
-        max-height: 300vh;
+        
     }
+    /* .page-content{
+        display: flex;
+        flex-direction: row;
+        gap: 40px;
+        justify-content: center;
+        align-items: center;
+    }
+    .page-content form{
+        flex: 0 0 60%;
+        margin-right: 40px;
+        
+    }
+    .page-content .password-requirements{
+        flex: 0 0 50%;
+        padding: 20px 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #efebeb;
+        font-size: 0.7rem;
+        opacity: 0.6;
+        font-style: italic;
+        margin-top: 0;
+    }
+    .page-content .password-requirements h4{
+        margin-top: 0;
+    } */
     </style>
 
