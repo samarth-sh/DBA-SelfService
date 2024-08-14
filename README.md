@@ -12,7 +12,7 @@
 
 ### Prerequisites
 
-- [Go](https://golang.org/doc/install) (version 1.23 or later)
+- [Go](https://golang.org/doc/install) (version 1.22 or later)
 - [Node.js](https://nodejs.org/) (version 14 or later)
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
 - [SQLite](https://www.sqlite.org/download.html) (or any compatible SQL database)
