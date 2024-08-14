@@ -1,0 +1,20 @@
+services:
+  go-backend:
+    build: ./go-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - my-network
+
+  sveltekit-frontend:
+    build: ./sveltekit-frontend
+    ports:
+      - "5173:3000"
+    networks:
+      - my-network
+    depends_on:
+      - go-backend
+
+networks:
+  my-network:
+    driver: bridge
