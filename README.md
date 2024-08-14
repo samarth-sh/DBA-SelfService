@@ -25,7 +25,7 @@
    ```bash
    git clone https://github.com/your-username/password-reset-portal.git
    cd password-reset-portal
-  ```
+   ```
 ### Running the Application
 
 #### Using Docker
