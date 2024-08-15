@@ -1,5 +1,3 @@
-# Under Development
-
 ## Password Reset Portal
 ## Tech Stack
 
