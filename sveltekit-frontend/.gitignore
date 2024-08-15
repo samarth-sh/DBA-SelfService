@@ -23,3 +23,5 @@ vite.config.ts.timestamp-*
 # Databases
 users.db
 logs.db
+
+.DS_Store
