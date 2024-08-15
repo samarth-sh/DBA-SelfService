@@ -1,3 +1,6 @@
 # Databases
 users.db
 logs.db
+
+# add the folder data
+data/

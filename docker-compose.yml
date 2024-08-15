@@ -6,6 +6,8 @@ services:
     networks:
       - my-network
     restart: always
+    volumes:
+      - ./go-backend/data:/app/data
     
 
   sveltekit-frontend:
@@ -21,3 +23,7 @@ services:
 networks:
   my-network:
     driver: bridge
+
+volumes:
+  go-backend-data:
+    driver: local

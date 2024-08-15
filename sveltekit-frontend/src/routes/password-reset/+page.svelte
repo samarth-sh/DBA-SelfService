@@ -99,11 +99,12 @@
             {/if}
         </div>
         <div class="page-content">
+         
             <form on:submit|preventDefault={updatePassword}>
-            
+
             <label for="username">Username</label>
             <input id="username" bind:value={username} placeholder="Enter your username" required>
-            
+
             <label for="serverIP">Server IP</label>
             <input id="serverIP" bind:value={serverIP} placeholder="Enter Server IP (10.xxx.xxx.xxx)" required>
                 
@@ -189,6 +190,7 @@
          </ul>
     </div>
 </div>
+
 </div>
 </main>
     
@@ -298,7 +300,7 @@
         width: 10px;
         margin-top: 10px;
     }
-    .password-requirements{
+    /* .password-requirements{
         margin-top: 20px;
         padding: 10px 20px;
         border: 1px solid #ccc;
@@ -308,13 +310,14 @@
         opacity: 0.8;
         font-style: italic;
         
-    }
-    /* .page-content{
+    } */
+    .page-content{
         display: flex;
         flex-direction: row;
         gap: 40px;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
+
     }
     .page-content form{
         flex: 0 0 60%;
@@ -323,17 +326,16 @@
     }
     .page-content .password-requirements{
         flex: 0 0 50%;
-        padding: 20px 10px;
+        padding: 20px 20px;
         border: 1px solid #ccc;
         border-radius: 8px;
         background-color: #efebeb;
         font-size: 0.7rem;
-        opacity: 0.6;
         font-style: italic;
         margin-top: 0;
     }
     .page-content .password-requirements h4{
         margin-top: 0;
-    } */
+    }
     </style>
 

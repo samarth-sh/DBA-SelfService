@@ -111,7 +111,6 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
     logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Success", "Password updated successfully")
 }
 
-
 var db *sql.DB
 var logDB *sql.DB
 
@@ -120,6 +119,8 @@ func main() {
 
     r := mux.NewRouter()
     r.HandleFunc("/update-password", updatePassword).Methods("PUT")
+
+    
 
     log.Println("Registered /update-password route")
 
@@ -142,7 +143,7 @@ func main() {
 
 func initDB() {
     var err error
-    db, err = sql.Open("sqlite3", "./users.db")
+    db, err = sql.Open("sqlite3", "./data/users.db")
     if err != nil {
         log.Fatal("Failed to open database: ", err)
     }
@@ -157,10 +158,16 @@ func initDB() {
         log.Fatal("Failed to create users table: ", err)
     }
     log.Println("Users table created successfully")
+    //Insert values into the table
+    _, err = db.Exec("INSERT INTO users (username, password, serverIP) VALUES (?, ?, ?)", "sam_admin", "admin", "10.0.0.1")
+    if err != nil {
+        log.Fatal("Failed to insert values into the table: ", err)
+    }
+    log.Println("Values inserted into the table successfully")
 }
 func initLogDB() {
     var err error
-    logDB, err = sql.Open("sqlite3", "./logs.db")
+    logDB, err = sql.Open("sqlite3", "./data/logs.db")
     if err != nil {
         log.Fatal("Failed to open database: ", err)
     }
