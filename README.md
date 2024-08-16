@@ -24,7 +24,6 @@
 
    ```bash
    git clone https://github.com/samarth-sh/DBA-SelfService.git
-   cd password-reset-portal
    ```
 ### Running the Application
 
@@ -93,6 +92,10 @@ All password update requests and actions are logged for auditing and monitoring 
 - `request_status`: Indicates the outcome of the request (e.g., success, failure).
 - `message`: A brief description of the action performed.
 - `timestamp`: The date and time when the action occurred.
+
+### For monitoring
+
+Use [DBeaver](https://dbeaver.com/download/) or [db Browser for SQLite](https://sqlitebrowser.org/dl/) to view and monitor the databases
 
 ## Acknowledgments
 
