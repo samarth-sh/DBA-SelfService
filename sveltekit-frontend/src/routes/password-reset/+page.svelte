@@ -107,7 +107,7 @@
     <div class="inputform">  
         <div class="headers">
             <h1>DBA Self Service</h1>
-            <h2>Password Reset</h2>
+            <h2>Password Reset Form</h2>
             <h3>Enter your credentials</h3>
         </div>
         <div class="messages">

@@ -11,7 +11,7 @@
 </script>
 
 <div class="mainContainer">
-<h1>Self Service Portal</h1>
+<h1>DBA Self Service Portal</h1>
 
 <div class="options">
     <button on:click={goToPasswordReset}>Password Reset</button>
@@ -36,7 +36,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        height: 90vh;
         gap: 20px;
         font-family: 'poppins';
     }
@@ -45,12 +45,12 @@
         font-size: 1.2rem;
         cursor: pointer;
         border-radius: 8px;
-        border: 0.5px solid #333;
+        border: 0.5px solid #1d1c1c;
         background-color: #5972e4;
         color: white;
     }
     button:hover {
-        background-color: #2039cb;
+        background-color: #2945e6;
         transition-duration: 0.3s;
         transition: all 0.3s;
     }
