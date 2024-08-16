@@ -1,9 +1,11 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.22.6
+FROM golang:1.22.6-alpine
 
 # Set destination for COPY
 WORKDIR /app
+
+RUN apk add --no-cache gcc musl-dev
 
 # Download Go modules
 COPY go.mod go.sum ./
