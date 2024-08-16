@@ -159,7 +159,7 @@ func initLogDB() {
         request_type Text DEFAULT 'Password Update',
         request_status Text DEFAULT 'Pending',
         message TEXT,
-        request_time DATETIME DEFAULT CURRENT_TIMESTAMP
+        request_time DATETIME DEFAULT (DATETIME('now', 'localtime'))
     )`)
     if err != nil {
         log.Fatal("Failed to create logs table: ", err)

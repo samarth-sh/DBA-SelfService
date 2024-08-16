@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
     let username: string = '';
     let oldPassword: string = '';
     let newPassword: string = '';
@@ -12,6 +13,21 @@
         const checkbox = event.target as HTMLInputElement;
         showPassword = checkbox.checked;
     }
+
+    let passMeetsRequirements: boolean = false;
+    let passwordsMatch: boolean = false;
+
+    $: passwordsMatch = newPassword === confirmPassword && newPassword !== '';
+
+    function validatePassword(password: string): boolean {
+        return password.length >= 8 && 
+        password.length <= 16 &&
+        !password.includes(username) &&
+        !password.includes(oldPassword) &&
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$#!%*?&]{8,16}$/.test(password);
+    }
+
+    $: passMeetsRequirements = validatePassword(newPassword);
 
     function validateInput(){
         if(newPassword !== confirmPassword) {
@@ -102,12 +118,13 @@
          
             <form on:submit|preventDefault={updatePassword}>
 
+
             <label for="username">Username</label>
             <input id="username" bind:value={username} placeholder="Enter your username" required>
 
             <label for="serverIP">Server IP</label>
             <input id="serverIP" bind:value={serverIP} placeholder="Enter Server IP (10.xxx.xxx.xxx)" required>
-                
+
             <label for="oldPassword">Current Password</label>
             {#if showPassword}
                 <input
@@ -126,6 +143,7 @@
             {/if}
 
             <label for="newPassword">New Password</label>
+            <div class="password-input">
             {#if showPassword}
                 <input
                 type="text"
@@ -141,8 +159,17 @@
                 placeholder="Enter your new password"
                 />
             {/if}
+            {#if passMeetsRequirements}
+            <span class="tick-mark" class:visible={passMeetsRequirements}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </span>            
+            {/if}
+            </div>
 
             <label for="confirmPassword">Confirm Password</label>
+            <div class="password-input">
             {#if showPassword}
                 <input
                 type="text"
@@ -158,7 +185,14 @@
                 placeholder="Re-type the new password"
                 />
             {/if}
-            
+            {#if passwordsMatch}
+            <span class="tick-mark" class:visible={passwordsMatch}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </span>            
+            {/if}
+            </div>
             <div class="checkbox">
                 <label>
                     <input
@@ -191,12 +225,11 @@
     </div>
 </div>
 
-</div>
 </main>
     
 <style>
     main{
-        max-width: 600px;
+        max-width: 800px;
         margin: 0 auto;
         padding: 20px;
         font-family: Poppins, sans-serif;
@@ -221,10 +254,13 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
+        max-width: 800px;
+        justify-content: center;
+        align-items: center;
     }
     form{
         width: 600px;
-        margin: 0.1rem auto;
+        margin: 0.3rem auto;
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -240,6 +276,7 @@
         outline: none;
         border-color: #007bff;
     }
+    
     .headers{
         text-align: center;
     }
@@ -250,10 +287,11 @@
         font-weight: bold;
         text-transform: uppercase;
     }
-  input[type="text"],
+    input[type="text"],
     input[type="password"] {
         flex: 1;
     }
+    
     button{
         width: 100%;
         padding: 0.5rem;
@@ -297,45 +335,66 @@
         font-size: 0.9rem;
     }
     #showPasswordBox{
-        width: 10px;
-        margin-top: 10px;
+        width: 14px;
+        margin-top: 0.2rem auto;
     }
-    /* .password-requirements{
-        margin-top: 20px;
-        padding: 10px 20px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #efebeb;
-        font-size: 0.9rem;
-        opacity: 0.8;
-        font-style: italic;
-        
-    } */
+
     .page-content{
         display: flex;
         flex-direction: row;
-        gap: 40px;
-        justify-content: space-between;
+        gap: 50px;
+        justify-content: center;
         align-items: center;
+        max-width: 100%;
 
     }
     .page-content form{
-        flex: 0 0 60%;
+        flex: 0 0 40%;
         margin-right: 40px;
         
     }
     .page-content .password-requirements{
-        flex: 0 0 50%;
-        padding: 20px 20px;
-        border: 1px solid #ccc;
+        flex: 0 0 40%;
+        padding: 20px 10px;
+        border: 1px solid #787676;
         border-radius: 8px;
         background-color: #efebeb;
-        font-size: 0.7rem;
+        font-size: 0.9rem;
         font-style: italic;
-        margin-top: 0;
+        margin: 0.2rem auto;
+        max-width: 100%;
     }
     .page-content .password-requirements h4{
         margin-top: 0;
     }
+    .password-input{
+        position: relative;
+        width: 100%;
+    }
+    .password-input input{
+        width: 100%;
+        padding: 0.5rem;
+    }
+    .tick-mark{
+        position: absolute;
+        top: 50%;
+        right: 5px;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        color: #4CAF50;
+        font-size: 1.2rem;
+        transition: opacity 0.8s ease;
+        opacity: 0;
+    }
+
+    .tick-mark.visible{
+        opacity: 1;
+    }
+    .tick-mark svg{
+        width: 100%;
+        height: 100%;
+    }
+
     </style>
 
