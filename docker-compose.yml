@@ -1,5 +1,6 @@
 services:
   go-backend:
+    container_name: go_backend
     build: ./go-backend
     ports:
       - "8080:8080"
@@ -11,6 +12,7 @@ services:
     
 
   sveltekit-frontend:
+    container_name: sveltekit_frontend
     build: ./sveltekit-frontend
     ports:
       - "5173:5173"
