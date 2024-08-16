@@ -1,4 +1,4 @@
-## Password Reset Portal
+# Password Reset Portal
 ## Tech Stack
 
 - **Frontend:** SvelteKit
