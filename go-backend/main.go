@@ -42,14 +42,6 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
     }
     log.Printf("Received: Username: %s, ServerIP: %s", request.Username, request.ServerIP)
 
-    // // Check if the server IP is valid and of the format 10.xxx.xxx.xxx
-    // if !regexp.MustCompile(`^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$`).MatchString(request.ServerIP) {
-    //    // http.Error(w, "Invalid server IP", http.StatusBadRequest)
-    //     sendErrorResponse(w, "Invalid server IP", http.StatusBadRequest)
-    //     logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid server IP", "Server IP is not in the format/does not match any known server")
-    //     return
-    // }
-
     //Check if the user exists in the database and retrieve the password
     var checkPass string
     log.Println("Checking if user exists in the database")
@@ -120,8 +112,6 @@ func main() {
     r := mux.NewRouter()
     r.HandleFunc("/update-password", updatePassword).Methods("PUT")
 
-    
-
     log.Println("Registered /update-password route")
 
     c := cors.New(cors.Options{
@@ -159,7 +149,7 @@ func initDB() {
     }
     log.Println("Users table created successfully")
     //Insert values into the table
-    _, err = db.Exec("INSERT INTO users (username, password, serverIP) VALUES (?, ?, ?)", "sam_admin", "admin", "10.0.0.1")
+    _, err = db.Exec("INSERT INTO users (username, password, serverIP) VALUES (?, ?, ?)", "test_admin", "Test@dmin#45", "10.0.0.1")
     if err != nil {
         log.Fatal("Failed to insert values into the table: ", err)
     }

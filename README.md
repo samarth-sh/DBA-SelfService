@@ -80,6 +80,12 @@
 
 ## Logging and Monitoring
 
+### For Testing
+
+- Username: test_admin
+- Password: Test@dmin#45
+- Server IP: 10.0.0.1
+
 All password update requests and actions are logged for auditing and monitoring purposes. The logs are stored in a dedicated table within the database with the following fields:
 
 - `request_id`: A unique identifier for each request.
