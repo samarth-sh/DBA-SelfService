@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	// "regexp"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/cors"
-    // "golang.org/x/crypto/bcrypt"
 )
 
 type UpdatePasswordRequest struct {
@@ -35,7 +33,6 @@ func sendSuccessResponse(w http.ResponseWriter, message string) {
 func updatePassword(w http.ResponseWriter, r *http.Request) {
     var request UpdatePasswordRequest
     if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-        //http.Error(w, err.Error(), http.StatusBadRequest)
         sendErrorResponse(w, "Failed to decode request", http.StatusBadRequest)
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to decode request", err.Error())
         return
@@ -47,12 +44,10 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
     log.Println("Checking if user exists in the database")
     err := db.QueryRow("SELECT password FROM users WHERE username = ?", request.Username).Scan(&checkPass)
     if err == sql.ErrNoRows {
-        // http.Error(w, "User not found", http.StatusNotFound)
         sendErrorResponse(w, "User not found", http.StatusNotFound)
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: User not found", "User does not exist in the database")
         return
     } else if err != nil {
-        // http.Error(w, err.Error(), http.StatusInternalServerError)
         sendErrorResponse(w, "Failed to query database", http.StatusInternalServerError)
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to query database", err.Error())
         return
@@ -63,7 +58,6 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
     log.Printf("Checking if password matches the one in the database")
     //Check if password matches the one in the database
     if request.OldPassword != checkPass {
-        // http.Error(w, "Invalid password", http.StatusUnauthorized)
         sendErrorResponse(w, "Invalid password", http.StatusUnauthorized)
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid password", "Old password does not match the one in the database")
         return
@@ -75,13 +69,11 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
     var checkServerIP string
     err = db.QueryRow("SELECT serverIP FROM users WHERE username = ?", request.Username).Scan(&checkServerIP)
     if err != nil {
-        //http.Error(w, err.Error(), http.StatusInternalServerError)
         sendErrorResponse(w, "Failed to query database", http.StatusInternalServerError)
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to query database", err.Error())
         return
     }
     if checkServerIP != request.ServerIP {
-        // http.Error(w, "Invalid server IP", http.StatusBadRequest)
         sendErrorResponse(w, "Invalid server IP", http.StatusBadRequest)
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid server IP", "Server IP does not match the one in the database")
         return
@@ -93,7 +85,6 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
     newPass := request.NewPassword
     _, err = db.Exec("UPDATE users SET password = ? WHERE username = ? AND serverIP = ?", newPass, request.Username, request.ServerIP)
     if err != nil {
-        // http.Error(w, err.Error(), http.StatusInternalServerError)
         sendErrorResponse(w, "Failed to update password", http.StatusInternalServerError)
         logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to update password", err.Error())
         return
