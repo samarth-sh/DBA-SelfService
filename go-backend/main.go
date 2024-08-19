@@ -59,7 +59,7 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
     //Check if password matches the one in the database
     if request.OldPassword != checkPass {
         sendErrorResponse(w, "Invalid password", http.StatusUnauthorized)
-        logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid password", "Old password does not match the one in the database")
+        logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid password", "Current password does not match the one in the database")
         return
     }
     log.Println("Password matches the one in the database")
