@@ -276,7 +276,7 @@
         }
         
     }
-    @media (min-width:225px){
+    @media (max-width:550px){
         main {
             padding: 12px;
             max-width: 100%;
@@ -319,8 +319,6 @@
             align-items: center;
             justify-content: center;
         }
-
-
     }
     .inputform{
         margin-left: 20px;
