@@ -256,13 +256,16 @@
         padding: 20px;
         font-family: Poppins, sans-serif;
     }
-    @media (max-width: 600px) {
+    @media (max-width: 800px) {
         main {
             padding: 10px;
             max-width: 100%;
         }
         h1{
             font-size: 1.5rem;
+        }
+        h2{
+            font-size: 1.2rem;
         }
         h3{
             font-size: 1rem;
@@ -271,8 +274,57 @@
             font-size: 0.8rem;
             padding: 5px;
         }
+        
+    }
+    @media (min-width:225px){
+        main {
+            padding: 12px;
+            max-width: 100%;
+            margin-left: 35px;
+            margin-right: 35px;
+            margin-top: 0 auto;
+        }
+        h1 {
+            font-size: 1.5rem;
+        }
+        h2, h3{
+            font-size: 1rem;
+        }
+        .inputform{
+            font-size: smaller;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            
+        }
+        input{
+            font-size: 0.9rem;
+            padding: 5px;
+        }
+        .password-requirements{
+            margin: 5px;
+            padding: 0.1rem auto;
+        }
+        ul, li {
+            font-size: 0.65rem;
+        }
+        form{
+            width: 100%;
+            margin: 0.2rem;
+        }
+        .page-content{
+            display: flex;
+            flex-direction: row;
+            gap: 5px;
+            align-items: center;
+            justify-content: center;
+        }
+
+
     }
     .inputform{
+        margin-left: 20px;
+        margin-right: 20px;
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -303,8 +355,8 @@
         text-align: center;
     }
     .messages{
-        margin-top: 10px;
-        margin-bottom: 10px;
+        margin-top: 4px;
+        margin-bottom: 8px;
         font-size: 0.9rem;
         font-weight: bold;
         text-transform: uppercase;
