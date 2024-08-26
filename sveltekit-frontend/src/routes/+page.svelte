@@ -15,7 +15,7 @@
 
 <div class="options">
     <button on:click={goToPasswordReset}>Password Reset</button>
-    <button on:click={goToAccessControl}>Access Control</button>
+    <button on:click={goToAccessControl} disabled>Access Control</button>
 </div>
 </div>
 

@@ -28,7 +28,7 @@
         password.length <= 16 &&
         !password.includes(username) &&
         !password.includes(oldPassword) &&
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$#!%*?&]{8,16}$/.test(password);
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$#!%*?&]{10,16}$/.test(password);
     }
 
     $: passMeetsRequirements = validatePassword(newPassword);
@@ -38,7 +38,7 @@
             errorMessage = 'Passwords do not match';
             return;
         }
-        if (newPassword.length < 8 || newPassword.length > 16) {
+        if (newPassword.length < 10 || newPassword.length > 16) {
             errorMessage = 'Password must be between 8 and 16 characters long';
             return;
         }
@@ -54,7 +54,7 @@
             errorMessage = 'Password cannot contain old password';
             return;
         }
-        if(!newPassword.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$#!%*?&]{8,16}$/)) {
+        if(!newPassword.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$#!%*?&]{10,16}$/)) {
             errorMessage = 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character';
             return;
         }
@@ -240,7 +240,7 @@
             <li>Special character</li>
             </ul>
          </li>
-         <li>Password must be between 8 and 16 characters long</li>
+         <li>Password must be between 10 and 16 characters long</li>
          <li>Password cannot contain username or old password</li>
          <li>Password can contain the following special characters: @$#!%*?&</li>
          </ul>
