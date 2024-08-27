@@ -2,22 +2,22 @@
 
 FROM golang:1.22.6-alpine
 
+# Install necessary dependencies
+RUN apk add --no-cache gcc musl-dev
+
 # Set destination for COPY
 WORKDIR /app
-
-RUN apk add --no-cache gcc musl-dev
 
 # Download Go modules
 COPY go.mod go.sum ./
 RUN go mod download
 
-
 COPY *.go ./
 
-# Build
+# Build the Go application
 RUN CGO_ENABLED=1 GOOS=linux go build -o /docker-gs-ping
 
 EXPOSE 8080
 
-# Run
+# Run the Go application
 CMD ["/docker-gs-ping"]

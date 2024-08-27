@@ -24,7 +24,7 @@
     $: passwordsMatch = newPassword === confirmPassword && newPassword !== '';
 
     function validatePassword(password: string): boolean {
-        return password.length >= 8 && 
+        return password.length >= 10 && 
         password.length <= 16 &&
         !password.includes(username) &&
         !password.includes(oldPassword) &&
@@ -39,7 +39,7 @@
             return;
         }
         if (newPassword.length < 10 || newPassword.length > 16) {
-            errorMessage = 'Password must be between 8 and 16 characters long';
+            errorMessage = 'Password must be between 10 and 16 characters long';
             return;
         }
         if(!serverIP.match(/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
