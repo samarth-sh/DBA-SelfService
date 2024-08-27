@@ -15,7 +15,7 @@
 - [Go](https://golang.org/doc/install) (version 1.22 or later)
 - [Node.js](https://nodejs.org/) (version 20 or later)
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
-- [SQLite](https://www.sqlite.org/download.html) (or any compatible SQL database)
+- [Postgres](https://www.postgresql.org/download/) (or any compatible SQL database)
 
 
 ### Installation
@@ -95,7 +95,7 @@ All password update requests and actions are logged for auditing and monitoring 
 
 ### For monitoring
 
-Use [DBeaver](https://dbeaver.com/download/) or [db Browser for SQLite](https://sqlitebrowser.org/dl/) to view and monitor the databases
+Use [DBeaver](https://dbeaver.com/download/) to view and monitor the databases
 
 ## Acknowledgments
 
