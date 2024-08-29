@@ -1,12 +1,18 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    let logs:Array<{ requestID: number, username: string, serverIP: string, requestType: string, requestStatus: string, message: string, requestTime: string }> = [];
+    let logs:Array<{ requestID: number, 
+        username: string, 
+        serverIP: string, 
+        requestType: string, 
+        requestStatus: string, 
+        message: string, 
+        requestTime: string }> = [];
     let error: string | null = null;
     let username: string = '';
     let password: string = '';
     let showPassword: boolean = false;
     let loggedIn: boolean = false; 
-    let user:string = 'Admin';
+    let user:string = '';
 
     function togglePasswordVisibility(event: Event): void {
         const checkbox = event.target as HTMLInputElement;
@@ -33,6 +39,8 @@
         username = '';
         password = '';
         logs = await response.json();
+        console.log(logs);
+        
       } catch (err: any) {
         error = err.message;
       }

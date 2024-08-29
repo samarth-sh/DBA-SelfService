@@ -1,26 +1,29 @@
-# Use an official Node runtime as the base image
-FROM node:20-alpine
+# Stage 1: Build the SvelteKit application
+FROM node:20-alpine AS builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
 COPY package.json package-lock.json ./
 
-# Install dependencies
 RUN npm ci
 
-# Copy the rest of the application code
 COPY . .
 
-# Build the SvelteKit application
 RUN npm run build
 
-# Expose the port the app runs on
+# Stage 2: Create the final runtime image
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/build /app/build
+COPY --from=builder /app/package.json /app/package-lock.json ./
+
+RUN npm ci --only=production
+
 EXPOSE 5173
 
 ENV PORT=5173
 ENV HOST=0.0.0.0
 
-# Command to run the application
 CMD ["node", "build"]
