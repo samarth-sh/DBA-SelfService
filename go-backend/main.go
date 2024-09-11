@@ -11,14 +11,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/lib/pq"
+	_ "github.com/microsoft/go-mssqldb"
 	"github.com/rs/cors"
 	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	db         *sql.DB
-	dbInitOnce sync.Once
 )
 
 func main() {
@@ -26,6 +23,8 @@ func main() {
 
 	initDB()
 	defer db.Close()
+	defer msdb.Close()
+	defer msWithUserCred.Close()
 
 	r := mux.NewRouter()
 
@@ -47,198 +46,307 @@ func main() {
 	http.ListenAndServe(":8080", handler)
 }
 
+var (
+    db       *sql.DB
+    msdb     *sql.DB
+	msWithUserCred *sql.DB
+    dbInitOnce sync.Once
+	msdbInitOnce sync.Once
+	msWithUserCredInitOnce sync.Once
+)
+
 func initDB() {
-	dbInitOnce.Do(func() {
-		connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			os.Getenv("DB_HOST"),
-			os.Getenv("DB_PORT"),
-			os.Getenv("DB_USER"),
-			os.Getenv("DB_PASSWORD"),
-			os.Getenv("DB_NAME"))
+    if err := godotenv.Load(".env");
+	err != nil {
+        log.Fatalf("Error loading .env file: %v", err)
+    }
+	log.Println("Loaded environment variables")
+	log.Println("Connecting to PostgreSQL and MS SQL Server...")
 
-		var err error
+	var err error
+    dbInitOnce.Do(func() {
+        pgconnStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+            os.Getenv("DB_HOST"),
+            os.Getenv("DB_PORT"),
+            os.Getenv("DB_USER"),
+            os.Getenv("DB_PASSWORD"),
+            os.Getenv("DB_NAME"))
 
-		for i := 0; i < 5; i++ {
-			db, err = sql.Open("postgres", connStr)
-			if err != nil {
-				log.Printf("Attempt %d: Failed to connect to database: %v", i+1, err)
-				time.Sleep(2 * time.Second)
-				continue
-			}
+        for i := 0; i < 5; i++ {
+            db, err = sql.Open("postgres", pgconnStr)
+            if err != nil {
+                log.Printf("Attempt %d: Failed to connect to PostgreSQL: %v", i+1, err)
+                time.Sleep(2 * time.Second)
+                continue
+            }
 
-			time.Sleep(10 * time.Second)
+            time.Sleep(10 * time.Second)
 
-			err = db.Ping()
-			if err == nil {
-				break
-			}
+            if err = db.Ping(); err == nil {
+                break
+            }
 
-			log.Printf("Attempt %d: Failed to ping database: %v", i+1, err)
-			time.Sleep(2 * time.Second)
-		}
+            log.Printf("Attempt %d: Failed to ping PostgreSQL: %v", i+1, err)
+            time.Sleep(2 * time.Second)
+        }
 
-		if err != nil {
-			log.Fatalf("Could not connect to database: %v", err)
-		}
+        if err != nil {
+            log.Fatalf("Could not connect to PostgreSQL: %v", err)
+        }
+        log.Println("Connected to PostgreSQL successfully")
 
-		log.Println("Connected to the database successfully")
+        initPostgresDB()
+    })
 
-		_, err = db.Exec("CALL create_users_table()")
-		if err != nil {
-			log.Fatal("Failed to create users table: ", err)
-		}
-		log.Println("Users table created successfully")
+    msdbInitOnce.Do(func() {
+        msconnStr := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
+            os.Getenv("MS_DB_SERVER"),
+            os.Getenv("MS_DB_USER"),
+            os.Getenv("MS_DB_PASSWORD"),
+            os.Getenv("MS_DB_PORT"),
+            os.Getenv("MS_DB_NAME"))
 
-		_, err = db.Exec("CALL insert_into_users($1, $2, $3)", "testt_user", "Test@userfortest123", "10.1.1.1")
-		if err != nil {
-			log.Fatal("Failed to insert values into the users table: ", err)
-		}
-		log.Println("Values inserted into the users table successfully")
+        msdb, err = sql.Open("mssql", msconnStr)
+        if err != nil {
+            log.Fatalf("Failed to connect to MS SQL Server: %v", err)
+        }
 
-		_, err = db.Exec("CALL create_logs_table()")
-		if err != nil {
-			log.Fatal("Failed to create logs table: ", err)
-		}
-		log.Println("Logs table created successfully")
+        if err = msdb.Ping(); err != nil {
+            log.Fatalf("Failed to ping MS SQL database: %v", err)
+        }
+        log.Println("Connected to MS SQL Server successfully")
 
-		_, err = db.Exec("CALL create_admin_table()")
-		if err != nil {
-			log.Fatal("Failed to create admin table: ", err)
-		}
-		log.Println("Admin table created successfully")
+        initMSSQLDB()
+    })
 
-		_, err = db.Exec("CALL insert_into_admin($1, $2)", "admin", "admin123")
-		if err != nil {
-			log.Fatal("Failed to insert values into the admin table: ", err)
-		}
-		log.Println("Values inserted into the admin table successfully")
-	})
+
+}
+
+func initPostgresDB() {
+    _, err := db.Exec("CALL create_pass_reset_logs_table()")
+    if err != nil {
+        log.Fatal("Failed to create pass_reset_logs table: ", err)
+    }
+    log.Println("Password Reset Logs table created successfully")
+
+    _, err = db.Exec("CALL create_admin_table()")
+    if err != nil {
+        log.Fatal("Failed to create admin table: ", err)
+    }
+    log.Println("Admin table created successfully")
+
+    _, err = db.Exec("SELECT insert_into_admin($1, $2)", "admin", "admin123")
+    if err != nil {
+        log.Fatal("Failed to insert values into the admin table: ", err)
+    }
+    log.Println("Values inserted into the admin table successfully")
+}
+
+func initMSSQLDB() {
+    initSQL, err := os.ReadFile("mssql_init.sql")
+	log.Println("Reading MS SQL Server init script...")
+    if err != nil {
+        log.Fatal("Failed to read MS SQL Server init script: ", err)
+    }
+
+    _, err = msdb.Exec(string(initSQL))
+	log.Println("Executing MS SQL Server init script...")
+    if err != nil {
+        log.Fatal("Failed to execute MS SQL Server init script: ", err)
+    }
+    log.Println("MS SQL Server initialization script executed successfully")
 }
 
 type UpdatePasswordRequest struct {
 	Username    string `json:"username"`
+	Email	   string `json:"emailID"`
 	OldPassword string `json:"oldPassword"`
 	NewPassword string `json:"newPassword"`
 	ServerIP    string `json:"serverIP"`
+	Database	string `json:"database"`
 }
+
+func check_user_credentials(msdb *sql.DB, username, serverIP, emailID string) (bool, error) {
+    var isValidUser bool
+    log.Println("Checking user credentials...")
+    log.Printf("Username: %s, ServerIP: %s, Email ID: %s", username, serverIP, emailID)
+
+    query := `DECLARE @IsValid BIT;
+              EXEC dbo.ValidateUserCredentials @Username = ?, @ServerIP = ?, @Email = ?, @IsValid = @IsValid OUTPUT;
+              SELECT @IsValid;`
+
+    log.Println("Executing query...")
+    row := msdb.QueryRow(query, username, serverIP, emailID)
+    log.Println("Query executed")
+    log.Println("Scanning row...")
+    if err := row.Scan(&isValidUser); err != nil {
+        return false, err
+    }
+    log.Println("Row scanned")
+    log.Println("User credentials checked successfully")
+
+    return isValidUser, nil
+}
+
+
+
+// func findRelatedServers(msdb *sql.DB, serverIP string) ([]string, error) {
+// 	query := "EXEC FindRelatedServers @ServerIP=?"
+// 	rows, err := msdb.Query(query, serverIP)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+
+// 	var serverReplicas []string
+// 	for rows.Next() {
+// 		var serverIP string
+// 		if err := rows.Scan(&serverIP); err != nil {
+// 			return nil, err
+// 		}
+// 		serverReplicas = append(serverReplicas, serverIP)
+// 	}
+
+// 	if err := rows.Err(); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return serverReplicas, nil
+// }
+
 
 func updatePassword(w http.ResponseWriter, r *http.Request) {
 	var request UpdatePasswordRequest
+	var err error
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		sendErrorResponse(w, "Failed to decode request", http.StatusBadRequest)
 		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to decode request", err.Error())
 		return
 	}
-	log.Printf("Received: Username: %s, ServerIP: %s", request.Username, request.ServerIP)
+	log.Printf("Received: Username: %s, ServerIP: %s, Email ID: %s", request.Username, request.ServerIP, request.Email)
 
-	// Check if the user exists in the database and retrieve the password
+	//create a log entry
+	logPasswordUpdate(request.Username, request.ServerIP, "Password Update", "Pending", "Password update request received")
+	log.Println("Password update request received")
+
+	// validate the user credentials
+	var isValidUser bool
+	isValidUser, err = check_user_credentials(msdb, request.Username, request.ServerIP, request.Email)
+	if err != nil {
+		sendErrorResponse(w, "Failed to validate user credentials", http.StatusInternalServerError)
+		logStatus(request.Username, request.ServerIP, "Password Update", "Failed to validate user credentials", err.Error())
+		return
+	}
+	if !isValidUser {
+		sendErrorResponse(w, "Invalid user credentials", http.StatusUnauthorized)
+		logStatus(request.Username, request.ServerIP, "Password Update", "Failed", "Invalid user credentials")
+		return
+	}
+	log.Println("User credentials validated successfully")
 	
-	var userExists bool
-	log.Println("Checking if user exists in the database")
-	//run the stored procedure to check if the user exists in the database which returns boolean value
-	err := db.QueryRow("SELECT user_exists($1)", request.Username).Scan(&userExists)
+	// using the user credentials to connect to the server
+	msWithUserCredstr := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
+		request.ServerIP,
+		request.Username,
+		request.OldPassword,
+		os.Getenv("MS_DB_PORT"),
+		request.Database)
+	
+	msWithUserCredInitOnce.Do(func() {
+		msWithUserCred, err = sql.Open("mssql", msWithUserCredstr)
+		if err != nil {
+			sendErrorResponse(w, "Failed to connect to the server using user provided credentials", http.StatusInternalServerError)
+			logStatus(request.Username, request.ServerIP, "Password Update", "Failed to connect to the server using user provided", err.Error())
+			return
+		}
+		defer msWithUserCred.Close()
+
+		
+		if err = msWithUserCred.Ping(); 
+		err != nil {
+			sendErrorResponse(w, "Failed to ping the server", http.StatusInternalServerError)
+			logStatus(request.Username, request.ServerIP, "Password Update", "Failed to ping the server", err.Error())
+			return
+		}
+		log.Println("Connected to the server successfully using user credentials")
+	})
+
+	// Calling the stored procedure to find related servers
+	// var serverReplicas []string
+	// log.Println("Finding related server replicas")
+	// serverReplicas, err = findRelatedServers(msdb, request.ServerIP)
+	// if err != nil {
+	// 	sendErrorResponse(w, "Failed to find related servers", http.StatusInternalServerError)
+	// 	logPasswordUpdate(request.Username, request.ServerIP, "Password Update", "Failed to find related servers", err.Error())
+	// 	return
+	// }
+	// log.Printf("Found related server replicas: %v", serverReplicas)
+	
+	// update password on the given server and related servers seperately by connecting to each server using admin credentials
+	// update password on the given server
+	_, err = msdb.Exec("EXEC dbo.ResetUserPassword @LoginName=?, @NewPassword=?, @DisablePolicy=?, @DisableExpiration=?", request.Username, request.NewPassword, 1, 1)
 	if err != nil {
-		sendErrorResponse(w, "Failed to query database - usercheck", http.StatusInternalServerError)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to query database", err.Error())
+		sendErrorResponse(w, "Failed to update password on the server", http.StatusInternalServerError)
+		logStatus(request.Username, request.ServerIP, "Password Update", "Failed to update password on the server", err.Error())
 		return
 	}
-	if !userExists {
-		sendErrorResponse(w, "User not found", http.StatusNotFound)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: User not found", "User does not exist in the database")
-		return
-	}
-	var checkPass string
-	err = db.QueryRow("SELECT get_user_password($1)", request.Username).Scan(&checkPass)
-	if err == sql.ErrNoRows {
-		sendErrorResponse(w, "User not found/password could not be retrieved(verified)", http.StatusNotFound)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: User not found", "Password could not be retrieved(verified)")
-		return
-	} else if err != nil {
-		sendErrorResponse(w, "Failed to query database - usercheck", http.StatusInternalServerError)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to query database", err.Error())
-		return
-	}
-	log.Println("User exists in the database")
+	log.Println("Password updated successfully on the server")
 
-	log.Println("Checking if the server IP matches the one in the database")
-	// Check if the server IP matches the one in the database
-	var checkServerIP string
-	err = db.QueryRow("SELECT get_serverip($1)", request.Username).Scan(&checkServerIP)
+	// update password on related servers
+	// for _, server := range serverReplicas {
+	// 	msWithAdminCredstr := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
+	// 		server,
+	// 		os.Getenv("MS_DB_USER"),
+	// 		os.Getenv("MS_DB_PASSWORD"),
+	// 		os.Getenv("MS_DB_PORT"),
+	// 		request.Database)
+	// 	msWithAdminCred, err := sql.Open("mssql", msWithAdminCredstr)
+	// 	if err != nil {
+	// 		sendErrorResponse(w, "Failed to connect to the related server", http.StatusInternalServerError)
+	// 		logPasswordUpdate(request.Username, request.ServerIP, "Password Update", "Failed to connect to the related server", err.Error())
+	// 		return
+	// 	}
+	// 	defer msWithAdminCred.Close()
+
+	// 	if err = msWithAdminCred.Ping(); err != nil {
+	// 		sendErrorResponse(w, "Failed to ping the related server", http.StatusInternalServerError)
+	// 		logPasswordUpdate(request.Username, request.ServerIP, "Password Update", "Failed to ping the related server", err.Error())
+	// 		return
+	// 	}
+	// 	log.Printf("Connected to the related server %s successfully", server)
+
+		// _, err = msWithAdminCred.Exec("EXEC UpdatePassword @username=?, @newPassword=?, @oldpassword", request.Username, request.NewPassword, request.OldPassword)
+		// if err != nil {
+		// 	sendErrorResponse(w, "Failed to update password on the related server", http.StatusInternalServerError)
+		// 	logPasswordUpdate(request.Username, request.ServerIP, "Password Update", "Failed to update password on the related server", err.Error())
+		// 	return
+		// }
+		// log.Printf("Password updated successfully on the related server %s", server)
+
+	//update the access_requests table
+	_, err = db.Exec("CALL update_pass_reset_logs($1, $2, $3, $4, $5)", request.Username, request.ServerIP, "Password Update", "Success", "Password updated successfully")
 	if err != nil {
-		sendErrorResponse(w, "Failed to query database - serverip", http.StatusInternalServerError)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to query database", err.Error())
-		return
-	}
-	if checkServerIP != request.ServerIP {
-		sendErrorResponse(w, "Invalid server IP", http.StatusBadRequest)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid server IP", "Server IP does not match the one in the database")
-		return
-	}
-	log.Println("Server IP matches the one in the database")
-
-
-	log.Printf("Password in the database: %s", checkPass)
-	log.Printf("Provided password: %s", request.OldPassword)
-	log.Println("Checking if password matches the one in the database")
-
-	// Check if password matches the one in the database
-// 	if checkPass != request.OldPassword {
-// 		sendErrorResponse(w, "Invalid password", http.StatusUnauthorized)
-// 		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid password", "Current password does not match the one in the database")
-// 		return
-// 	}
-// 	log.Println("Password matches the one in the database")
-
-// 	//Insert the new password into the database
-// 	_, err = db.Exec("CALL update_user_password($1, $2, $3)", request.NewPassword, request.Username, request.ServerIP)
-// 	if err != nil {
-// 		sendErrorResponse(w, "Failed to update password", http.StatusInternalServerError)
-// 		log.Printf("Failed to update password: %v", err)
-// 		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to update password", err.Error())
-// 		return
-// 	}
-
-// 	sendSuccessResponse(w, "Password updated successfully")
-// 	logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Success", "Password updated successfully")
-// 	log.Printf("Password updated successfully for user: %s", request.Username)
-// }
-
-	if err := bcrypt.CompareHashAndPassword([]byte(checkPass), []byte(request.OldPassword)); err != nil {
-		log.Printf("Password comparison failed: %v", err)
-		sendErrorResponse(w, "Invalid password", http.StatusUnauthorized)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed: Invalid password", "Current password does not match the one in the database")
-		return
-	}
-
-	log.Println("Password matches the one in the database")
-
-	// Hash the new password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
-	if err != nil {
-		sendErrorResponse(w, "Failed to hash password", http.StatusInternalServerError)
-		log.Printf("Failed to hash new password: %v", err)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to hash password", err.Error())
-		return
-	}
-
-	// Update password with the hashed value
-	_, err = db.Exec("CALL update_user_password($1, $2, $3)", hashedPassword, request.Username, request.ServerIP)
-	if err != nil {
-		sendErrorResponse(w, "Failed to update password", http.StatusInternalServerError)
-		log.Printf("Failed to update password: %v", err)
-		logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Failed to update password", err.Error())
+		sendErrorResponse(w, "Failed to update pass_reset_logs table", http.StatusInternalServerError)
+		logStatus(request.Username, request.ServerIP, "Password Update", "Failed to update access_requests table", err.Error())
 		return
 	}
 
 	sendSuccessResponse(w, "Password updated successfully")
-	logPasswordUpdate("Password Update", request.Username, request.ServerIP, "Success", "Password updated successfully")
+	
+	logPasswordUpdate(request.Username, request.ServerIP, "Password Update", "Success", "Password updated successfully")
 	log.Printf("Password updated successfully for user: %s", request.Username)
 }
-
-func logPasswordUpdate(requestType, username, serverIP, requestStatus, message string) {
-	_, err := db.Exec("CALL log_updates($1, $2, $3, $4 ,$5)", requestType, username, serverIP, requestStatus, message)
+func logPasswordUpdate(username, serverIP, requestType, requestStatus, message string) {
+	_, err := db.Exec("CALL log_updates($1, $2, $3, $4, $5)", username, serverIP, requestType, requestStatus, message)
 	if err != nil {
 		log.Printf("Failed to log password update: %v", err)
+	}
+}
+func logStatus(username, serverIP, requestType, requestStatus, message string) {
+	_, err := db.Exec("CALL update_pass_reset_logs($1, $2, $3, $4, $5)", username, serverIP, requestType, requestStatus, message)
+	if err != nil {
+		log.Printf("Failed to log status: %v", err)
 	}
 }
 
@@ -257,23 +365,19 @@ func sendSuccessResponse(w http.ResponseWriter, message string) {
 // 	log.Printf("Error response sent: %v with status code %d", message, statusCode)
 // }
 func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
-	// Set Content-Type header
 	w.Header().Set("Content-Type", "application/json")
-
-	// Write the status code only if it hasn't been written yet
 	if statusCode >= 400 {
 		w.WriteHeader(statusCode)
 	}
-
-	// Encode the error message as JSON
 	response := map[string]string{"error": message}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		// Log if encoding fails but don't write another response
 		log.Printf("Failed to send error response: %v", err)
 	}
-	
-	// Log the error response for debugging purposes
 	log.Printf("Error response sent: %v with status code %d", message, statusCode)
+}
+func hashPassword(password string) (string, error) {
+    bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+    return string(bytes), err
 }
 
 func adminLogin(w http.ResponseWriter, r *http.Request) {
@@ -282,91 +386,98 @@ func adminLogin(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		sendErrorResponse(w, "Failed to decode request", http.StatusBadRequest)
 		log.Printf("Failed to decode admin login request: %v", err)
+		sendErrorResponse(w, "Failed to decode request", http.StatusBadRequest)
 		return
 	}
 
-	// Check if the admin credentials are valid
+	hashPassword(credentials.Password)
+
 	var isValidAdmin bool
 	err := db.QueryRow("SELECT check_admin_credentials($1, $2)", credentials.Username, credentials.Password).Scan(&isValidAdmin)
 	if err != nil {
-		sendErrorResponse(w, "Failed to validate admin credentials", http.StatusInternalServerError)
 		log.Printf("Failed to validate admin credentials: %v", err)
+		sendErrorResponse(w, "Failed to validate admin credentials", http.StatusInternalServerError)
 		return
 	}
 
 	if !isValidAdmin {
-		sendErrorResponse(w, "Invalid admin credentials", http.StatusUnauthorized)
 		log.Println("Invalid admin credentials provided")
+		sendErrorResponse(w, "Invalid admin credentials", http.StatusUnauthorized)
 		return
 	}
 
 	sendSuccessResponse(w, "Admin login successful")
 	log.Println("Admin login successful")
-	getAllResetReq(w, r)
+
+	http.Redirect(w, r, "/getAllResetReq", http.StatusSeeOther)
+}
+
+type ResetRequest struct {
+	RequestID      int    `json:"requestID"`
+	Username       string `json:"username"`
+	ServerIP       string `json:"serverIP"`
+	RequestType    string `json:"requestType"`
+	RequestStatus  string `json:"requestStatus"`
+	RequestTime    string `json:"requestTime"`
 }
 
 func getAllResetReq(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT * FROM get_all_logs()")
 	if err != nil {
-		sendErrorResponse(w, "Failed to query reset requests", http.StatusInternalServerError)
+		sendErrorResponse2(w, "Failed to query reset requests", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var requests []map[string]interface{}
+	var requests []ResetRequest
 	location, err := time.LoadLocation("Asia/Kolkata")
 	if err != nil {
-		sendErrorResponse(w, "Failed to load time zone", http.StatusInternalServerError)
+		sendErrorResponse2(w, "Failed to load time zone", http.StatusInternalServerError)
 		log.Printf("Failed to load time zone: %v", err)
 		return
 	}
 
 	for rows.Next() {
-		var requestID int
-		var requestType, username, serverIP, requestStatus, message string
+		var request ResetRequest
 		var requestTime pq.NullTime
 
-		if err := rows.Scan(&requestID, &requestType, &username, &serverIP, &requestStatus, &message, &requestTime); err != nil {
-			sendErrorResponse(w, "Failed to scan reset requests", http.StatusInternalServerError)
+		if requestTime.Valid {
+
+			localTime := requestTime.Time.In(location)
+			request.RequestTime = localTime.Format("2006-01-02 15:04:05")
+		} else {
+			request.RequestTime = requestTime.Time.Format("2006-01-02 15:04:05")
+		}
+
+		if err := rows.Scan(&request.RequestID, &request.Username, &request.ServerIP, &request.RequestType, &request.RequestStatus, &requestTime);
+		err != nil {
+			sendErrorResponse2(w, "Failed to scan reset requests", http.StatusInternalServerError)
 			log.Printf("Failed to scan reset requests: %v", err)
 			return
 		}
-	
-	var formattedRequestTime string
-	if requestTime.Valid {
-		localTime := requestTime.Time.In(location)
-		formattedRequestTime = localTime.Format("2006-01-02 15:04:05") // Custom format
-	} else {
-		formattedRequestTime = "N/A"
+
+		requests = append(requests, request)
 	}
 
-	request := map[string]interface{}{
-		"requestID":      requestID,
-		"username":       username,
-		"serverIP":       serverIP,
-		"requestType":    requestType,
-		"requestStatus":  requestStatus,
-		"message":        message,
-		"requestTime":    formattedRequestTime,
+	if err := rows.Err(); err != nil {
+		sendErrorResponse2(w, "Failed to iterate over reset requests", http.StatusInternalServerError)
+		log.Printf("Failed to iterate over reset requests: %v", err)
+		return
 	}
-	requests = append(requests, request)
+
+	sendJSONResponse(w, requests, http.StatusOK)
 }
 
-if err := rows.Err(); err != nil {
-	sendErrorResponse(w, "Failed to iterate over reset requests", http.StatusInternalServerError)
-	log.Printf("Failed to iterate over reset requests: %v", err)
-	return
+func sendJSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(statusCode)
+    if err := json.NewEncoder(w).Encode(data); err != nil {
+        log.Printf("Failed to send JSON response: %v", err)
+    }
 }
 
-if len(requests) == 0 {
-	sendSuccessResponse(w, "No reset requests found")
-	return
-}else {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(requests)
+func sendErrorResponse2(w http.ResponseWriter, message string, statusCode int) {
+    response := map[string]string{"error": message}
+    sendJSONResponse(w, response, statusCode)
 }
-
-}
-

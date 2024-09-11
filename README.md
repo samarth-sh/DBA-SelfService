@@ -3,7 +3,7 @@
 
 - **Frontend:** SvelteKit
 - **Backend:** Go
-- **Database:** PostgreSQL (for user information and logging)
+- **Database:** PostgreSQL (for user information and logging) and MS SQL (for updations and validation)
 - **Containerization:** Docker
 
 ## Setup

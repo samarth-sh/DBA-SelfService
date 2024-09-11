@@ -23,6 +23,10 @@ WORKDIR /app
 
 COPY --from=builder /docker-gs-ping /docker-gs-ping
 
+COPY .env .env
+
+COPY mssql_init.sql /app/mssql_init.sql
+
 EXPOSE 8080
 
 CMD ["/docker-gs-ping"]

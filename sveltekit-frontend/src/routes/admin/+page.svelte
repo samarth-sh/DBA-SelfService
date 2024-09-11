@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    let logs:Array<{ requestID: number, 
+    let logs:Array<{ 
+        requestID: number, 
         username: string, 
         serverIP: string, 
         requestType: string, 
@@ -18,37 +19,68 @@
         const checkbox = event.target as HTMLInputElement;
         showPassword = checkbox.checked;
     }
-    async function handleSubmit(){
 
-      try {
-        const response = await fetch('http://localhost:8080/admin-login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            username,
-            password
-          })
-        });
-        if (!response.ok) {
-          throw new Error('Failed to login');
-        }
-        loggedIn = true;
-        user = username
-        username = '';
-        password = '';
-        logs = await response.json();
-        console.log(logs);
-        
-      } catch (err: any) {
-        error = err.message;
-      }
+    async function handleSubmit() {
+  try {
+    const response = await fetch('http://localhost:8080/admin-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username,
+        password
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to login');
     }
+
+    loggedIn = true;
+    user = username;
+    username = '';
+    password = '';
+
+    // Now fetch the logs from the redirected URL
+    const logsResponse = await fetch('http://localhost:8080/getAllResetReq', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!logsResponse.ok) {
+      throw new Error('Failed to fetch logs');
+    }
+
+    const data = await logsResponse.json();
+
+    // Check if the data format is correct and update logs
+    if (Array.isArray(data) && data.every(item =>
+      typeof item.requestID === 'number' &&
+      typeof item.username === 'string' &&
+      typeof item.serverIP === 'string' &&
+      typeof item.requestType === 'string' &&
+      typeof item.requestStatus === 'string' &&
+      typeof item.requestTime === 'string')) {
+      logs = data;
+    } else {
+      throw new Error('Invalid data format');
+    }
+
+    console.log("Fetched Logs:", logs);
+  } catch (err: any) {
+    error = err.message;
+  }
+}
+
+
     function handleLogout(): void {
         loggedIn = false;
     }
 </script>
+
 <main>
     {#if loggedIn}
     <div class="loginInfo">
@@ -60,7 +92,6 @@
     </div>
     {:else}
     <div class="form-content">
-      <!-- form content -->
       <form on:submit|preventDefault={handleSubmit}>
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" bind:value={username} placeholder="Enter admin username" required/>
@@ -97,7 +128,6 @@
     </form>
 </div>
 {/if}
-
 {#if error}
     <p style="color: red;">{error}</p>
 {:else if loggedIn}
@@ -109,7 +139,6 @@
                 <th>Server IP</th>
                 <th>Request Type</th>
                 <th>Request Status</th>
-                <th>Message</th>
                 <th>Request Time</th>
             </tr>
         </thead>
@@ -121,7 +150,6 @@
                     <td>{log.serverIP}</td>
                     <td>{log.requestType}</td>
                     <td>{log.requestStatus}</td>
-                    <td>{log.message}</td>
                     <td>{log.requestTime}</td>
                 </tr>
             {/each}
@@ -129,7 +157,6 @@
     </table>
 {/if}
 </main>
-    
 <style>
     main{
         max-width: 800px;
@@ -193,17 +220,17 @@
             padding: 0.3rem;
         }
     }
-    table {
+   table {
         margin-top: 40px;
       width: 100%;
       border-collapse: collapse;
-    }
+    } 
     th, td {
-      border: 1px solid #ddd;
+      border: 1px solid #b0afaf;
       padding: 8px;
     }
     th {
-      background-color: #f2f2f2;
+      background-color: #f5f3f3;
     }
     .checkbox {
         display: flex;

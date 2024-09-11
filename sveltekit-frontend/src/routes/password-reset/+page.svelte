@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { tick } from 'svelte';
     let username: string = '';
+    let database: string = '';
+    let emailID: string = '';
     let oldPassword: string = '';
     let newPassword: string = '';
     let confirmPassword: string = '';
@@ -46,6 +48,14 @@
             errorMessage = 'Invalid Server IP';
             return;
         }
+        if (emailID === '' || !emailID.includes('@') || !emailID.includes('.')) { 
+            errorMessage = 'Check your Email ID and try again';
+            return;
+        }
+        if (database === '') {
+            errorMessage = 'Database name cannot be empty';
+            return;
+        }
         if (newPassword.includes(username)) {
             errorMessage = 'Password cannot contain username';
             return;
@@ -54,7 +64,7 @@
             errorMessage = 'Password cannot contain old password';
             return;
         }
-        if(!newPassword.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$#!%*?&]{10,16}$/)) {
+        if(!newPassword.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$#!%*?&])[A-Za-z\d@$#!%*?&_^]{10,16}$/)) {
             errorMessage = 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character';
             return;
         }
@@ -65,7 +75,7 @@
         if(!validateInput()){
             return;
         }
-
+        console.log('Sending request:', { username, emailID, oldPassword, newPassword, serverIP, database });
         errorMessage = '';
         successMessage = '';
 
@@ -78,10 +88,12 @@
                 username,
                 oldPassword,
                 newPassword,
-                serverIP
+                serverIP,
+                emailID,
+                database
             })
         });
-        console.log('Sending request:', { username, oldPassword, newPassword, serverIP });
+        console.log('Sending request:', { username, emailID, oldPassword, newPassword, serverIP });
         const result = await response.json();
         if (!response.ok) {
             if(result.error){
@@ -94,10 +106,12 @@
         }
         else{
             username = '';
+            serverIP = '';
+            emailID = '';
+            database = '';
             oldPassword = '';
             newPassword = '';
             confirmPassword = '';
-            serverIP = '';
             successMessage = result.message || 'Password updated successfully';
         }
     }
@@ -123,11 +137,17 @@
             <form on:submit|preventDefault={updatePassword}>
 
 
-            <label for="username">Username</label>
+            <label for="username">Login Name</label>
             <input id="username" bind:value={username} placeholder="Enter your username" required>
 
+            <label for="emailID">Email ID</label>
+            <input id="emailID" type="email" bind:value={emailID} placeholder="Enter your email ID" required>
+            
             <label for="serverIP">Server IP</label>
             <input id="serverIP" bind:value={serverIP} placeholder="Enter Server IP (10.xxx.xxx.xxx)" required>
+
+            <label for="database">Database</label>
+            <input id="database" bind:value={database} placeholder="Enter your database name (Case Sensitive)" required>
 
             <label for="oldPassword">Current Password</label>
             {#if showPassword}
@@ -253,7 +273,7 @@
     main{
         max-width: 800px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 18px;
         font-family: Poppins, sans-serif;
     }
     @media (max-width: 800px) {
@@ -295,7 +315,6 @@
             display: flex;
             flex-direction: column;
             gap: 2px;
-            
         }
         input{
             font-size: 0.9rem;
@@ -335,7 +354,7 @@
         margin: 0.3rem auto;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
     }
     input{
         width: 100%;
@@ -350,7 +369,7 @@
     }
     
     .headers{
-        text-align: center;
+        text-align: center; 
     }
     .messages{
         margin-top: 4px;
@@ -418,6 +437,7 @@
         justify-content: center;
         align-items: center;
         max-width: 100%;
+        /* max-height: 100%; */
 
     }
     .page-content form{
@@ -467,5 +487,25 @@
         width: 100%;
         height: 100%;
     }
+    /* .radio-buttons{
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+    }
+    .radio-buttons label{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
+    }
+    .radio-buttons input{
+        width: 14px;
+        height: 18px;
+    }
+    .radio-buttons label{
+        font-size: 0.85rem;
+    } */
+
+
 
     </style>
