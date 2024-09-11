@@ -5,3 +5,4 @@ logs.db
 # add the folder data
 data/
 access_code.txt
+.env
