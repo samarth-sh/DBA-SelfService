@@ -79,12 +79,6 @@
 
 ## Logging and Monitoring
 
-### For Testing
-
-- Username: test_admin
-- Password: Test@dmin#45
-- Server IP: 10.0.0.1
-
 All password update requests and actions are logged for auditing and monitoring purposes. The logs are stored in a dedicated table within the database with the following fields:
 
 - `request_id`: A unique identifier for each request.
@@ -95,7 +89,7 @@ All password update requests and actions are logged for auditing and monitoring 
 
 ### For monitoring
 
-Use [DBeaver](https://dbeaver.com/download/) to view and monitor the databases
+Use [DBeaver](https://dbeaver.com/download/) or [Azure Data Studio](https://learn.microsoft.com/en-us/azure-data-studio/download-azure-data-studio?view=sql-server-ver16&tabs=win-install%2Cwin-user-install%2Credhat-install%2Cwindows-uninstall%2Credhat-uninstall) to view and monitor the databases
 
 ## Acknowledgments
 
