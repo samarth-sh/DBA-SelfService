@@ -15,7 +15,7 @@
 - [Go](https://golang.org/doc/install) (version 1.22 or later)
 - [Node.js](https://nodejs.org/) (version 20 or later)
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
-- [Postgres](https://www.postgresql.org/download/) (for recording request logs)
+- [PostgreSQL](https://www.postgresql.org/download/) (for recording request logs)
 
 
 ### Installation
