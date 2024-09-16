@@ -15,7 +15,7 @@
 - [Go](https://golang.org/doc/install) (version 1.22 or later)
 - [Node.js](https://nodejs.org/) (version 20 or later)
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
-- [Postgres](https://www.postgresql.org/download/) (or any compatible SQL database)
+- [Postgres](https://www.postgresql.org/download/) 
 
 
 ### Installation
@@ -96,3 +96,4 @@ Use [DBeaver](https://dbeaver.com/download/) or [Azure Data Studio](https://lear
 - [SvelteKit](https://kit.svelte.dev/) for the frontend framework.
 - [Go](https://golang.org/) for the backend framework.
 - [Docker](https://www.docker.com/) for containerized deployment.
+- [PostgreSQL](https://www.postgresql.org/) and [MS-SQL](https://www.microsoft.com/en-in/sql-server/sql-server-downloads) for database setup and configurations.
