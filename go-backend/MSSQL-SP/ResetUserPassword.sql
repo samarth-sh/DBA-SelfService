@@ -34,3 +34,4 @@ BEGIN
     
     PRINT 'Password reset for login [' + @LoginName + '] has been completed.';
 END;
+    

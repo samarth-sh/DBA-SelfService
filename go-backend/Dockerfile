@@ -3,7 +3,7 @@
 # Stage 1: Build the application
 FROM golang:1.22.6-alpine AS builder
 
-RUN time apk add --no-cache gcc musl-dev
+RUN apk add --no-cache gcc musl-dev
 
 WORKDIR /app
 
@@ -24,8 +24,8 @@ WORKDIR /app
 COPY --from=builder /docker-gs-ping /docker-gs-ping
 
 COPY .env .env
-
-COPY mssql_init.sql /app/mssql_init.sql
+COPY MSSQL-SP /app/MSSQL-SP
+COPY MSSQL-UDF /app/MSSQL-UDF
 
 EXPOSE 8080
 
