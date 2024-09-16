@@ -18,3 +18,5 @@ package
 users.db
 logs.db
 .DS_Store
+*.git
+*.md
