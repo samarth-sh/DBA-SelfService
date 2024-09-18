@@ -120,9 +120,9 @@
 <main>
     <div class="inputform">  
         <div class="headers">
-            <h1>DBA Self Service</h1>
-            <h2>Password Reset Form</h2>
-            <h3>Enter your credentials</h3>
+            <h1 class="heading">DBA Self Service</h1>
+            <h2 class="heading">Password Reset Form</h2>
+            <h3 class="heading">Enter your credentials</h3>
         </div>
         <div class="messages">
             {#if errorMessage}
@@ -252,17 +252,17 @@
     <div class="password-requirements">
         <h4>Password Requirements</h4>
         <ul>
-        <li>Password must contain at least one
+        <li>Password must contain at least three of the following four categories:
          <ul>
-            <li>Uppercase letter</li>
-            <li>Lowercase letter</li>
-            <li>Number</li>
-            <li>Special character</li>
-            </ul>
+            <li>Latin uppercase letters (A through Z)</li>
+            <li>Latin lowercase letters (a through z)</li>
+            <li>Base 10 digits (0 through 9)</li>
+            <li>Nonalphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%).</li>
+        </ul>
          </li>
          <li>Password must be between 10 and 16 characters long</li>
          <li>Password cannot contain username or old password</li>
-         <li>Password can contain the following special characters: @$#!%*?&</li>
+         <li>Password can contain the following special characters: @, $, #, !, %, *, &</li>
          </ul>
     </div>
 </div>
@@ -273,7 +273,7 @@
     main{
         max-width: 800px;
         margin: 0 auto;
-        padding: 18px;
+        padding: 10px;
         font-family: Poppins, sans-serif;
     }
     @media (max-width: 800px) {
@@ -344,17 +344,17 @@
         margin-right: 20px;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
         max-width: 800px;
         justify-content: center;
         align-items: center;
     }
     form{
         width: 600px;
-        margin: 0.3rem auto;
+        margin: 0.1rem auto;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
     }
     input{
         width: 100%;
@@ -370,6 +370,10 @@
     
     .headers{
         text-align: center; 
+
+    }
+    .heading{
+        margin: 0.6rem auto;
     }
     .messages{
         margin-top: 4px;
@@ -437,16 +441,15 @@
         justify-content: center;
         align-items: center;
         max-width: 100%;
-        /* max-height: 100%; */
 
     }
     .page-content form{
-        flex: 0 0 40%;
+        flex: 0 0 45%;
         margin-right: 40px;
         
     }
     .page-content .password-requirements{
-        flex: 0 0 40%;
+        flex: 0 0 50%;
         padding: 20px 10px;
         border: 1px solid #787676;
         border-radius: 8px;

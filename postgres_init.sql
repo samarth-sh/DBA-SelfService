@@ -13,7 +13,7 @@ BEGIN
         request_type TEXT NOT NULL DEFAULT 'Password Reset',
         request_status TEXT DEFAULT 'Pending',
         message TEXT,
-        created_at TIMESTAMPTZ DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') -- Adjusting to IST
+        created_at TIMESTAMPTZ DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') 
     );
 END;
 $$;
@@ -113,7 +113,6 @@ $$;
 
 
 -- Procedure to get all logs from the pass_reset_logs table in the form of a table
--- Procedure to get all logs from the pass_reset_logs table in the form of a table
 DROP FUNCTION IF EXISTS get_all_logs;
 CREATE OR REPLACE FUNCTION get_all_logs()
 RETURNS TABLE (
@@ -122,6 +121,7 @@ RETURNS TABLE (
     serverIP TEXT,
     request_type TEXT,
     request_status TEXT,
+    message TEXT,
     created_at TIMESTAMPTZ
 )
 LANGUAGE plpgsql
@@ -129,7 +129,7 @@ AS $$
 BEGIN
     RETURN QUERY 
         SELECT 
-            p.id, p.username, p.serverIP, p.request_type, p.request_status, 
+            p.id, p.username, p.serverIP, p.request_type, p.request_status, p.message,
             p.created_at
         FROM pass_reset_logs p;
 END;

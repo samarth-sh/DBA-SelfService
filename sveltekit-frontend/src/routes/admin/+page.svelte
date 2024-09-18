@@ -63,6 +63,7 @@
       typeof item.serverIP === 'string' &&
       typeof item.requestType === 'string' &&
       typeof item.requestStatus === 'string' &&
+        typeof item.message === 'string' &&
       typeof item.requestTime === 'string')) {
       logs = data;
     } else {
@@ -139,6 +140,7 @@
                 <th>Server IP</th>
                 <th>Request Type</th>
                 <th>Request Status</th>
+                <th>Message</th>
                 <th>Request Time</th>
             </tr>
         </thead>
@@ -150,6 +152,7 @@
                     <td>{log.serverIP}</td>
                     <td>{log.requestType}</td>
                     <td>{log.requestStatus}</td>
+                    <td>{log.message}</td>
                     <td>{log.requestTime}</td>
                 </tr>
             {/each}

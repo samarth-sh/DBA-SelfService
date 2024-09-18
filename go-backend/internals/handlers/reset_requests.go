@@ -6,7 +6,6 @@ import (
 	"go-backend/models"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/lib/pq"
 )
@@ -26,14 +25,14 @@ func GetAllResetReq(w http.ResponseWriter, r *http.Request) {
 		var request models.ResetRequest
 		var requestTime pq.NullTime
 	
-		if err := rows.Scan(&request.RequestID, &request.Username, &request.ServerIP, &request.RequestType, &request.RequestStatus, &requestTime); err != nil {
+		if err := rows.Scan(&request.RequestID, &request.Username, &request.ServerIP, &request.RequestType, &request.RequestStatus, &request.Message, &requestTime); err != nil {
 			pkg.SendErrorResponse(w, "Failed to scan reset requests", http.StatusInternalServerError)
 			log.Printf("Failed to scan reset requests: %v", err)
 			return
 		}
 	
 		if requestTime.Valid {
-			request.RequestTime = requestTime.Time.Format(time.Now().Local().String())
+			request.RequestTime = requestTime.Time.Format("2006-01-02 15:04:05")
 		} else {
 			request.RequestTime = "N/A"
 		}

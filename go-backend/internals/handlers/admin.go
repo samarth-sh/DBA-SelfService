@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"go-backend/internals/database"
-	"go-backend/internals/pkg"
 	"log"
 	"net/http"
+
+	"go-backend/internals/database"
+	"go-backend/internals/pkg"
 
 
 )
@@ -39,7 +40,7 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pkg.SendSuccessResponse(w, "Admin login successful")
+	// pkg.SendSuccessResponse(w, "Admin login successful")
 	log.Println("Admin login successful")
 
 	http.Redirect(w, r, "/getAllResetReq", http.StatusSeeOther)

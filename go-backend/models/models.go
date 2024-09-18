@@ -15,5 +15,6 @@ type ResetRequest struct {
 	ServerIP      string `json:"serverIP"`
 	RequestType   string `json:"requestType"`
 	RequestStatus string `json:"requestStatus"`
+	Message       string `json:"message"`
 	RequestTime   string `json:"requestTime"`
 }

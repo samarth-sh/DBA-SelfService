@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"sync"
 
-
 	"github.com/joho/godotenv"
 	_ "github.com/microsoft/go-mssqldb"
 )
@@ -62,7 +61,7 @@ func initMSSQL() {
 			}
 
 			if !d.IsDir() && filepath.Ext(d.Name()) == ".sql" {
-				log.Printf("Reading file: %s", path)
+				// log.Printf("Reading file: %s", path)
 
 				sqlContent, err := os.ReadFile(path)
 				if err != nil {
@@ -74,7 +73,7 @@ func initMSSQL() {
 				if err != nil {
 					log.Fatalf("Failed to execute SQL script from file: %s, error: %v", path, err)
 				}
-				log.Printf("Successfully executed SQL script from: %s", path)
+				// log.Printf("Successfully executed SQL script from: %s", path)
 			}
 
 			return nil

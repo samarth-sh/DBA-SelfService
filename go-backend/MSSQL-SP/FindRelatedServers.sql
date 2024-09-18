@@ -16,12 +16,10 @@ with cte as (
 	left join dbo.sma_hadr_ag r
 		on r.server <> c.server
 		and ( r.ag_listener_ip1 = c.ag_listener_ip1 and  r.ag_listener_ip2 = c.ag_listener_ip2)
-	--
 	union
-	--
 	select c.server
 	from cte c
 )
-select *
+select @RelatedServers = STRING_AGG(server, ',')
 from cte2
 END;

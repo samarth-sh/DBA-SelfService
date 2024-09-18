@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
 
 	"go-backend/internals/database"
 	"go-backend/internals/pkg"
 	"go-backend/models"
-	"log"
-	"net/http"
-	"os"
 )
 
 func UpdatePassword(w http.ResponseWriter, r *http.Request) {
@@ -62,14 +62,26 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isValid {
-		fmt.Println("Login is valid, proceed further.")
+		fmt.Println("Login is valid, proceeding to check old password via connecting...")
+		// check if the old password is still valid
+		isValidOldPassword, err := pkg.CheckOldPassword(msdb, request.Username, request.ServerIP, request.OldPassword, request.Database)
+		if err != nil {
+			pkg.SendErrorResponse(w, "Failed to check old password", http.StatusInternalServerError)
+			pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed to check old password", err.Error())
+			return
+		}
+		if !isValidOldPassword {
+			fmt.Println("Old password is invalid.")
+			pkg.SendErrorResponse(w, "Old password is invalid", http.StatusUnauthorized)
+			pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed", "Old password is invalid")
+			return
+		}
 	} else {
 		fmt.Println("Login is invalid or expired.")
 		pkg.SendErrorResponse(w, "Login is invalid or expired", http.StatusUnauthorized)
 		pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed", "Login is invalid or expired")
 		return
 	}
-
 		
 	// Calling the stored procedure to find related servers
 	var serverReplicas []string 
@@ -81,41 +93,43 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Found related server replicas: %v", serverReplicas)
-
 	// update password on the given server and related servers seperately by connecting to each server using admin credentials
 	// update password on the given server
-	_, err = msdb.Exec("EXEC dbo.ResetUserPassword @LoginName=?, @NewPassword=?, @DisablePolicy=?, @DisableExpiration=?", request.Username, request.NewPassword, 1, 1)
-	if err != nil {
-		pkg.SendErrorResponse(w, "Failed to update password on the server", http.StatusInternalServerError)
-		pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed to update password on the server", err.Error())
-		return
-	}
-	log.Println("Password updated successfully on the server")
+	_, err = msdb.Exec("EXEC dbo.ResetUserPassword @LoginName=?, @NewPassword=?, @OldPassword=?", request.Username, request.NewPassword, request.OldPassword)
+    if err != nil {
+        sqlErr := err.Error()
+        pkg.SendErrorResponse(w, "Failed to update password on the server: "+sqlErr, http.StatusInternalServerError)
+        pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed to update password on the server", sqlErr)
+        return
+    }
+    log.Println("Password updated successfully on the server")
+
 
 	// // update password on related servers
 	for _, server := range serverReplicas {
-		msWithAdminCredstr := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
+		msWithUserCredstr := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
 			server,
 			request.Username,
 			request.OldPassword,
 			os.Getenv("MS_DB_PORT"),
 			request.Database)
-		msWithAdminCred, err := sql.Open("mssql", msWithAdminCredstr)
+			
+		msWithUserCred, err := sql.Open("mssql", msWithUserCredstr)
 		if err != nil {
 			pkg.SendErrorResponse(w, "Failed to connect to the related server", http.StatusInternalServerError)
 			pkg.LogPasswordUpdate(db, request.Username, request.ServerIP, "Password Update", "Failed to connect to the related server", err.Error())
 			return
 		}
-		defer msWithAdminCred.Close()
+		defer msWithUserCred.Close()
 
-		if err = msWithAdminCred.Ping(); err != nil {
+		if err = msWithUserCred.Ping(); err != nil {
 			pkg.SendErrorResponse(w, "Failed to ping the related server", http.StatusInternalServerError)
 			pkg.LogPasswordUpdate(db, request.Username, request.ServerIP, "Password Update", "Failed to ping the related server", err.Error())
 			return
 		}
 		log.Printf("Connected to the related server %s successfully", server)
 
-	_, err = msWithAdminCred.Exec("EXEC UpdatePassword @username=?, @newPassword=?, @oldpassword", request.Username, request.NewPassword, request.OldPassword)
+	_, err = msWithUserCred.Exec("EXEC UpdatePassword @username=?, @newPassword=?, @oldpassword", request.Username, request.NewPassword, request.OldPassword)
 	if err != nil {
 		pkg.SendErrorResponse(w, "Failed to update password on the related server", http.StatusInternalServerError)
 		pkg.LogPasswordUpdate(db, request.Username, request.ServerIP, "Password Update", "Failed to update password on the related server", err.Error())
@@ -134,11 +148,10 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	pkg.SendSuccessResponse(w, "Password updated successfully")
 	// send email to the user once the password is updated
 	err = pkg.SendConfirmationEmail(request.Email, request.Username)
-		if err != nil {
-			log.Printf("Failed to send confirmation email: %v", err)
-		}
+	if err != nil {
+		log.Printf("Failed to send confirmation email: %v", err)
+	}
 
 	log.Printf("Password updated successfully for user: %s", request.Username)
 }
 }
-
