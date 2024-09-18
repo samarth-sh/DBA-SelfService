@@ -138,7 +138,7 @@
 
 
             <label for="username">Login Name</label>
-            <input id="username" bind:value={username} placeholder="Enter your username" required>
+            <input id="username" bind:value={username} placeholder="Enter your login name (Case Sensitive)" required>
 
             <label for="emailID">Email ID</label>
             <input id="emailID" type="email" bind:value={emailID} placeholder="Enter your email ID" required>

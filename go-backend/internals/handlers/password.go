@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
 	"go-backend/internals/database"
 	"go-backend/internals/pkg"
 	"go-backend/models"
 	"log"
 	"net/http"
 	"os"
-
 )
 
 func UpdatePassword(w http.ResponseWriter, r *http.Request) {
@@ -19,6 +19,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	db := database.GetDB()
 	msdb := database.GetMSDB()
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		pkg.SendErrorResponse(w, "Failed to decode request", http.StatusBadRequest)
 		pkg.LogPasswordUpdate(db, "Password Update", request.Username, request.ServerIP, "Failed to decode request", err.Error())
@@ -51,22 +52,27 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed", "New password is the same as old password")
 		return
 	}
-		var isValid bool
-		// Check if the old password still works
-		isValid, err = pkg.CheckOldPassword(msdb, request.Username, request.ServerIP, request.OldPassword, request.Database)
-		if err != nil {
-			pkg.SendErrorResponse(w, "Failed to check old password", http.StatusInternalServerError)
-			pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed to check old password", err.Error())
-			return
-		}
-		if isValid {
-			pkg.SendErrorResponse(w, "New password cannot be the same as the old password", http.StatusBadRequest)
-			pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed", "New password is the same as old password")
-			return
-		}
+
+	isValid, err := pkg.CheckLoginExpiration(msdb, request.Username, request.ServerIP)
+	if err != nil {
+		log.Fatalf("Error checking login expiration: %v", err)
+		pkg.SendErrorResponse(w, "Failed to check login expiration", http.StatusInternalServerError)
+		pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed to check login expiration", err.Error())
+		return
+	}
+
+	if isValid {
+		fmt.Println("Login is valid, proceed further.")
+	} else {
+		fmt.Println("Login is invalid or expired.")
+		pkg.SendErrorResponse(w, "Login is invalid or expired", http.StatusUnauthorized)
+		pkg.LogStatus(db, request.Username, request.ServerIP, "Password Update", "Failed", "Login is invalid or expired")
+		return
+	}
+
 		
 	// Calling the stored procedure to find related servers
-	var serverReplicas []string
+	var serverReplicas []string 
 	log.Println("Finding related server replicas...")
 	serverReplicas, err = pkg.FindRelatedServers(msdb, request.ServerIP)
 	if err != nil {
@@ -86,7 +92,7 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Password updated successfully on the server")
 
-	// update password on related servers
+	// // update password on related servers
 	for _, server := range serverReplicas {
 		msWithAdminCredstr := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s",
 			server,

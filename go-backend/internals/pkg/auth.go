@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-
 )
 func Check_user_credentials(msdb *sql.DB, username, serverIP, emailID string) (bool, error) {
 	var isValidUser bool
@@ -68,4 +67,31 @@ func FindRelatedServers(msdb *sql.DB, serverIP string) ([]string, error) {
 	}
 
 	return serverReplicas, nil
+}
+func CheckLoginExpiration(msdb *sql.DB, loginName, sqlInstance string) (bool, error) {
+	var isExpired sql.NullBool
+	var isValid sql.NullBool
+
+	query := `
+		DECLARE @IsExpired BIT, @IsValid BIT;
+		EXEC dbo.CheckLoginExpiration @LoginName = ?, @SqlInstance = ?, @IsExpired = @IsExpired OUTPUT, @IsValid = @IsValid OUTPUT;
+		SELECT @IsExpired, @IsValid;
+	`
+	err := msdb.QueryRow(query, loginName, sqlInstance).Scan(&isExpired, &isValid)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("login does not exist")
+		}
+		return false, err
+	}
+
+	if !isValid.Valid || !isExpired.Valid {
+		return false, fmt.Errorf("failed to retrieve login expiration status")
+	}
+
+	if !isValid.Bool || isExpired.Bool {
+		return false, fmt.Errorf("login expired or invalid")
+	}
+
+	return true, nil
 }
