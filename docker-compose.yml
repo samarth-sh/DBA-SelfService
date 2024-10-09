@@ -4,7 +4,7 @@ services:
     image: postgres:16-alpine
     ports:
       - "5432:5432"
-    restart: always
+    restart: on-failure
     environment:
       POSTGRES_USER: samarth_sh
       POSTGRES_PASSWORD: 8Y0VfrsfgeIUOl5
@@ -27,12 +27,14 @@ services:
       - "8080:8080"
     networks:
       - my-network
-    restart: always
+    restart: on-failure
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
       - ./go-backend/.env
+    volumes:
+      - go-backend-data:/app/data
 
   sveltekit-frontend:
     container_name: sveltekit_frontend
@@ -43,7 +45,7 @@ services:
       - my-network
     depends_on:
       - go-backend
-    restart: always
+    restart: on-failure
 
 networks:
   my-network:
@@ -52,3 +54,6 @@ networks:
 volumes:
   postgres-data:
     driver: local
+  go-backend-data:
+    driver: local
+  

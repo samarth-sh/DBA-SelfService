@@ -14,7 +14,14 @@
     let showPassword: boolean = false;
     let loggedIn: boolean = false; 
     let user:string = '';
-
+        
+    onMount(() => {
+        const storedUser = localStorage.getItem('loggedInUser');
+        if (storedUser) {
+            loggedIn = true;
+            user = storedUser;
+        }
+    });
     function togglePasswordVisibility(event: Event): void {
         const checkbox = event.target as HTMLInputElement;
         showPassword = checkbox.checked;

@@ -15,7 +15,7 @@ func SendConfirmationEmail(to, username string) error {
 
 	auth := smtp.PlainAuth("", from, password, smtpServer)
 
-	subject := "DBA Login Password Reset Successful"
+	subject := "DB Login Password Reset Successful"
 	body := fmt.Sprintf("Hello %s,\n\nYour password has been successfully reset.\n\nBest regards,\nYour Company", username)
 	message := []byte(fmt.Sprintf("Subject: %s\r\n\r\n%s", subject, body))
 

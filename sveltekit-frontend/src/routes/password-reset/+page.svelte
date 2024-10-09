@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
     let username: string = '';
     let database: string = '';
     let emailID: string = '';
@@ -257,7 +257,7 @@
             <li>Latin uppercase letters (A through Z)</li>
             <li>Latin lowercase letters (a through z)</li>
             <li>Base 10 digits (0 through 9)</li>
-            <li>Nonalphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%).</li>
+            <li>Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%).</li>
         </ul>
          </li>
          <li>Password must be between 10 and 16 characters long</li>
@@ -455,7 +455,7 @@
         border-radius: 8px;
         background-color: #efebeb;
         font-size: 0.9rem;
-        font-style: italic;
+        font-style: normal;
         margin: 0.2rem auto;
         max-width: 100%;
     }
