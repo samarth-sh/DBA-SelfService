@@ -1,4 +1,4 @@
-# Password Reset Portal
+# DBA Self Service
 ## Tech Stack
 
 - **Frontend:** SvelteKit
