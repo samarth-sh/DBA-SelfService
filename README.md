@@ -14,7 +14,7 @@
 
 - [Go](https://golang.org/doc/install) (version 1.22 or later)
 - [Node.js](https://nodejs.org/) (version 20 or later)
-- [Docker](https://www.docker.com/) (optional, for containerized deployment)
+- [Docker](https://www.docker.com/) (for containerized deployment)
 - [PostgreSQL](https://www.postgresql.org/download/) (for recording request logs)
 
 
@@ -72,20 +72,11 @@
 
       ```bash
       npm install
+      npm run build
       npm run dev
       ```
 
     - The frontend should be running at `http://localhost:5173`.
-
-## Logging and Monitoring
-
-All password update requests and actions are logged for auditing and monitoring purposes. The logs are stored in a dedicated table within the database with the following fields:
-
-- `request_id`: A unique identifier for each request.
-- `request_type`: Defaults to 'update password'.
-- `request_status`: Indicates the outcome of the request (e.g., success, failure).
-- `message`: A brief description of the action performed.
-- `timestamp`: The date and time when the action occurred.
 
 ### For monitoring
 
