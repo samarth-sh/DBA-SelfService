@@ -4,10 +4,10 @@ import (
 	"go-backend/internals/database"
 	"go-backend/internals/pkg"
 	"go-backend/models"
-	"log"
 	"net/http"
 
 	"github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 )
 
 
@@ -27,7 +27,7 @@ func GetAllResetReq(w http.ResponseWriter, r *http.Request) {
 	
 		if err := rows.Scan(&request.RequestID, &request.Username, &request.ServerIP, &request.RequestType, &request.RequestStatus, &request.Message, &requestTime); err != nil {
 			pkg.SendErrorResponse(w, "Failed to scan reset requests", http.StatusInternalServerError)
-			log.Printf("Failed to scan reset requests: %v", err)
+			log.Error().Msgf("Failed to scan reset requests: %v", err)
 			return
 		}
 	
@@ -42,7 +42,7 @@ func GetAllResetReq(w http.ResponseWriter, r *http.Request) {
 	
 	if err := rows.Err(); err != nil {
 		pkg.SendErrorResponse2(w, "Failed to iterate over reset requests", http.StatusInternalServerError)
-		log.Printf("Failed to iterate over reset requests: %v", err)
+		log.Error().Msgf("Failed to iterate over reset requests: %v", err)
 		return
 	}
 	

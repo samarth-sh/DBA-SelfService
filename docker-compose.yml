@@ -40,7 +40,7 @@ services:
     container_name: sveltekit_frontend
     build: ./sveltekit-frontend
     ports:
-      - "5173:5173"
+      - "8080:8080"
     networks:
       - my-network
     depends_on:

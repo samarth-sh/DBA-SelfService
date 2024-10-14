@@ -3,8 +3,9 @@ package pkg
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/rs/zerolog/log"
 
 )
 func Check_user_credentials(msdb *sql.DB, username, serverIP, emailID string) (bool, error) {
@@ -17,7 +18,7 @@ func Check_user_credentials(msdb *sql.DB, username, serverIP, emailID string) (b
 	if err := row.Scan(&isValidUser); err != nil {
 		return false, err
 	}
-	log.Println("User credentials checked successfully")
+	log.Info().Msg("User credentials for" + username + "validated")
 
 	return isValidUser, nil
 }
@@ -31,17 +32,17 @@ func CheckOldPassword(msdb *sql.DB, username, serverIP, oldPassword, database st
 
 	msWithUserCred, err := sql.Open("mssql", msWithUserCredstr)
 	if err != nil {
-		log.Printf("Failed to connect to the server using old credentials: %v", err)
+		log.Error().Err(err).Msg("Failed to connect to MS SQL Server with user credentials")
 		return false, err
 	}
 	defer msWithUserCred.Close()
 
 	if err = msWithUserCred.Ping(); err != nil {
-		log.Printf("Old password failed authentication: %v", err)
+		log.Error().Err(err).Msgf("Failed to ping MS SQL Server: %v", err)
 		return false, err
 	}
 
-	log.Println("Old password is still valid")
+	log.Info().Msg("Old Password is valid")
 	return true, nil
 }
 
@@ -80,18 +81,21 @@ func CheckLoginExpiration(msdb *sql.DB, loginName, sqlInstance string) (bool, er
 	err := msdb.QueryRow(query, loginName, sqlInstance).Scan(&isExpired, &isValid)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, fmt.Errorf("login does not exist")
+			log.Error().Err(err).Msg("Login does not exist")
+			return false, err
 		}
 		return false, err
 	}
 
 	if !isValid.Valid || !isExpired.Valid {
-		return false, fmt.Errorf("failed to retrieve login expiration status")
+		log.Error().Msg("Failed to retrieve login expiration status")
+		return false, err
 	}
 
 	if !isValid.Bool || isExpired.Bool {
-		return false, fmt.Errorf("login expired or invalid")
+		log.Error().Msg("Login expired or invalid")
+		return false, err
 	}
-
+	log.Info().Msg("Login is still valid")
 	return true, nil
 }

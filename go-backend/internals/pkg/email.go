@@ -2,9 +2,10 @@ package pkg
 
 import (
 	"fmt"
-	"log"
 	"net/smtp"
 	"os"
+
+	"github.com/rs/zerolog/log"
 )
 
 func SendConfirmationEmail(to, username string) error {
@@ -25,6 +26,6 @@ func SendConfirmationEmail(to, username string) error {
 		return err
 	}
 
-	log.Printf("Confirmation email sent to %s", to)
+	log.Info().Msg("Email sent successfully")
 	return nil
 }

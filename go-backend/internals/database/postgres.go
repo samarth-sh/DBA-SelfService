@@ -3,13 +3,13 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -18,10 +18,11 @@ var (
 )
 func ConnectPostgres() (*sql.DB, error) {
 	if err := godotenv.Load(".env"); err != nil {
-		return nil, fmt.Errorf("error loading .env file: %v", err)
+		log.Error().Msgf("error loading .env file: %v", err)
+		return nil, err
 	}
-	log.Println("Loaded environment variables")
-	log.Println("Connecting to PostgreSQL...")
+	log.Info().Msg("Loaded environment variables from .env file")
+	log.Info().Msg("Connecting to PostgreSQL...")
 
 	var err error
 	dbInitOnce.Do(func() {
@@ -35,7 +36,7 @@ func ConnectPostgres() (*sql.DB, error) {
 		for i := 0; i < 5; i++ {
 			db, err = sql.Open("postgres", pgconnStr)
 			if err != nil {
-				log.Printf("Attempt %d: Failed to connect to PostgreSQL: %v", i+1, err)
+				log.Info().Msgf("Attempt %d: Failed to connect to PostgreSQL: %v", i+1, err)
 				time.Sleep(2 * time.Second)
 				continue
 			}
@@ -45,15 +46,14 @@ func ConnectPostgres() (*sql.DB, error) {
 			if err = db.Ping(); err == nil {
 				break
 			}
-
-			log.Printf("Attempt %d: Failed to ping PostgreSQL: %v", i+1, err)
+			log.Info().Msgf("Attempt %d: Failed to ping PostgreSQL: %v", i+1, err)
 			time.Sleep(2 * time.Second)
 		}
 
 		if err != nil {
 			return
 		}
-		log.Println("Connected to PostgreSQL successfully")
+		log.Info().Msg("Connected to PostgreSQL successfully")
 		initPostgres()
 	})
 
@@ -63,26 +63,26 @@ func ConnectPostgres() (*sql.DB, error) {
 func initPostgres() {
 	_, err := db.Exec("CALL create_pass_reset_logs_table()")
 	if err != nil {
-		log.Fatal("Failed to create pass_reset_logs table: ", err)
+		log.Fatal().Err(err).Msg("Failed to create password reset logs table")
 	}
-	log.Println("Password Reset Logs table created successfully")
+	log.Info().Msg("Password reset logs table created successfully")
 
 	_, err = db.Exec("CALL create_admin_table()")
 	if err != nil {
-		log.Fatal("Failed to create admin table: ", err)
+		log.Fatal().Err(err).Msg("Failed to create admin table")
 	}
-	log.Println("Admin table created successfully")
+	log.Info().Msg("Admin table created successfully")
 
 	_, err = db.Exec("SELECT insert_into_admin($1, $2)", "admin", "admin123")
 	if err != nil {
-		log.Fatal("Failed to insert values into the admin table: ", err)
+		log.Fatal().Err(err).Msg("Failed to insert values into the admin table")
 	}
-	log.Println("Values inserted into the admin table successfully")
+	log.Info().Msg("Values inserted into admin table successfully")
 }
 func GetDB() *sql.DB {
 	if db == nil {
-		log.Fatal("Database connection is not initialized")
-		log.Println("Connecting to PostgreSQL...")
+		log.Fatal().Msg("Postgres Database connection is nil")
+		log.Info().Msg("Initializing connection to PostgreSQL...")
 		ConnectPostgres()
 	}
 	return db

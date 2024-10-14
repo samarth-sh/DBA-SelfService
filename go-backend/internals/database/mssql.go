@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 
 	"github.com/joho/godotenv"
 	_ "github.com/microsoft/go-mssqldb"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -22,8 +22,8 @@ func ConnectMSSQL() (*sql.DB, error) {
 	if err := godotenv.Load(".env"); err != nil {
 		return nil, fmt.Errorf("error loading .env file: %v", err)
 	}
-	log.Println("Loaded environment variables")
-	log.Println("Connecting to MS SQL Server...")
+	log.Info().Msg("Loaded environment variables from .env file")
+	log.Info().Msg("Connecting to MS SQL Server...")
 
 	var err error
 	msdbInitOnce.Do(func() {
@@ -42,7 +42,7 @@ func ConnectMSSQL() (*sql.DB, error) {
 		if err = msdb.Ping(); err != nil {
 			return
 		}
-		log.Println("Connected to MS SQL Server successfully")
+		log.Info().Msg("Connected to MS SQL Server successfully")
 
 		initMSSQL()
 	})
@@ -53,7 +53,7 @@ func initMSSQL() {
 	directories := []string{"MSSQL-SP", "MSSQL-UDF"}
 
 	for _, dir := range directories {
-		log.Printf("Reading SQL files from directory: %s", dir)
+		log.Info().Msgf("Executing initialization scripts from directory: %s", dir)
 
 		err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
@@ -65,13 +65,13 @@ func initMSSQL() {
 
 				sqlContent, err := os.ReadFile(path)
 				if err != nil {
-					log.Fatalf("Failed to read file: %s, error: %v", path, err)
+					log.Fatal().Err(err).Msgf("Failed to read SQL script from file: %s", path)
 				}
 
 				log.Printf("Executing SQL script from: %s", path)
 				_, err = msdb.Exec(string(sqlContent))
 				if err != nil {
-					log.Fatalf("Failed to execute SQL script from file: %s, error: %v", path, err)
+					log.Fatal().Err(err).Msgf("Failed to execute SQL script from: %s", path)
 				}
 				// log.Printf("Successfully executed SQL script from: %s", path)
 			}
@@ -80,17 +80,15 @@ func initMSSQL() {
 		})
 
 		if err != nil {
-			log.Fatalf("Failed to read files from directory %s: %v", dir, err)
+			log.Fatal().Err(err).Msgf("Failed to read initialization scripts from directory: %s", dir)
 		}
 	}
-
-	log.Println("MS SQL Server initialization scripts executed successfully")
-
+	log.Info().Msg("Successfully executed all initialization scripts")
 }
 func GetMSDB () *sql.DB {
 	if msdb == nil {
-		log.Fatal("MSSQL is not connected")
-		log.Println("Connecting to MS SQL Server...")
+		log.Fatal().Msg("MS SQL Server connection is not initialized")
+		log.Info().Msg("Initializing MS SQL Server connection...")
 		ConnectMSSQL()
 	}
 

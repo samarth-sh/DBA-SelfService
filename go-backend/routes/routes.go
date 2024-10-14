@@ -11,6 +11,5 @@ func RegisterRoutes() *mux.Router {
     r.HandleFunc("/update-password", handlers.UpdatePassword).Methods("PUT")
     r.HandleFunc("/admin-login", handlers.AdminLogin).Methods("POST")
     r.HandleFunc("/getAllResetReq", handlers.GetAllResetReq).Methods("GET")
-
     return r
 }

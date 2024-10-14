@@ -1,29 +1,67 @@
-# syntax=docker/dockerfile:1
 
-FROM golang:1.23-alpine AS builder
+# Set the Go version and base image
+ARG GO_IMAGE_VER=1.23-alpine
+FROM golang:${GO_IMAGE_VER} AS builder
 
-RUN apk add --no-cache gcc musl-dev
+# Set working directory inside the container
+WORKDIR /go/src/app
 
-WORKDIR /app
-
+# Copy necessary files
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . ./
-RUN CGO_ENABLED=1 GOOS=linux go build -o /app/go-backend/go-backend
+# Copy the source code
+COPY . .
 
-FROM alpine:latest
+# Set build arguments for versioning and metadata
+ARG BUILD_STAMP=$(date +%Y%m%d%H%M%S)
+ARG GIT_COMMIT_ID=
+ARG GIT_PRIMARY_BRANCH=main
+ARG GIT_URL=
+ARG HOST_NAME=Samarth-MacBook-Pro.local
+ARG GIT_COMMIT_AUTHOR=samarth-sh
 
-RUN apk add --no-cache libc6-compat
 
-WORKDIR /app
+# Run tests (optional but recommended)
+RUN GOOS=linux CGO_ENABLED=1 go test -v -a -tags musl
 
-COPY --from=builder /app/go-backend/go-backend /app/go-backend/
+# Build the Go app with appropriate build flags for versioning
+RUN GOOS=linux CGO_ENABLED=1 go build -a -tags musl -o /go/bin/go-backend \
+  -ldflags "-X github.com/your_username/go-actuator.BuildStamp=$BUILD_STAMP \
+            -X github.com/your_username/go-actuator.GitCommitID=$GIT_COMMIT_ID \
+            -X github.com/your_username/go-actuator.GitPrimaryBranch=$GIT_PRIMARY_BRANCH \
+            -X github.com/your_username/go-actuator.GitURL=$GIT_URL \
+            -X github.com/your_username/go-actuator.Username=$HOST_NAME \
+            -X github.com/your_username/go-actuator.core.GitCommitAuthor=$GIT_COMMIT_AUTHOR"
 
-COPY .env .env
+##
+# Archive Stage
+##
+
+# Base image for final build
+FROM 732165046977.dkr.ecr.ap-south-1.amazonaws.com/sre-golang-base-image:3  AS artifact
+
+# Set the service port
+ARG SERVICE_PORT=8080
+
+# Set the timezone
+ENV TZ Asia/Calcutta
+
+# Copy the compiled binary from the build stage
+COPY --from=builder /go/bin/go-backend /app/go-backend
+
+# Copy MSSQL stored procedures and user-defined functions
 COPY MSSQL-SP /app/MSSQL-SP
 COPY MSSQL-UDF /app/MSSQL-UDF
 
-EXPOSE 8080
+# Healthcheck and expose port
+HEALTHCHECK NONE
+EXPOSE ${SERVICE_PORT}
 
-CMD ["/app/go-backend/go-backend"]
+# Create an entrypoint script
+RUN echo -e "#!/bin/sh\n/app/go-backend" > /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
+
+# Set the entrypoint to run the Go app
+ENTRYPOINT ["/app/entrypoint.sh"]
+

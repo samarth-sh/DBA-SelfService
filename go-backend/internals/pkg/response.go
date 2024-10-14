@@ -2,10 +2,9 @@ package pkg
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
-
+	"github.com/rs/zerolog/log"
 )
 
 func SendSuccessResponse(w http.ResponseWriter, message string)  {
@@ -21,16 +20,16 @@ func SendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	}
 	response := map[string]string{"error": message}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Failed to send error response: %v", err)
+		log.Error().Msgf("Failed to send error response: %v", err)
 	}
-	log.Printf("Error response sent: %v with status code %d", message, statusCode)
+	log.Info().Msgf("Error response sent: %v with status code %d", message, statusCode)
 }
 
 func SendJSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Printf("Failed to send JSON response: %v", err)
+		log.Error().Err(err).Msg("Failed to send JSON response")
 	}
 }
 

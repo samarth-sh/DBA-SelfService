@@ -15,7 +15,7 @@ const config = {
 		//adapter: adapter({port: 5173})
 		adapter: adapter({
 			env: {
-				port: process.env.PORT || 5173
+				port: process.env.PORT || 8080
 			}
 		})
 	}

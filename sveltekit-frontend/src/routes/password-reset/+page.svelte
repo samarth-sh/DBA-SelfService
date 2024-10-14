@@ -490,25 +490,5 @@
         width: 100%;
         height: 100%;
     }
-    /* .radio-buttons{
-        display: flex;
-        flex-direction: row;
-        gap: 10px;
-    }
-    .radio-buttons label{
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 5px;
-    }
-    .radio-buttons input{
-        width: 14px;
-        height: 18px;
-    }
-    .radio-buttons label{
-        font-size: 0.85rem;
-    } */
-
-
 
     </style>
