@@ -15,9 +15,9 @@ COPY . .
 
 # Set build arguments for versioning and metadata
 ARG BUILD_STAMP=$(date +%Y%m%d%H%M%S)
-ARG GIT_COMMIT_ID=
+ARG GIT_COMMIT_ID=2f1aeb4ea80be0f9e7a627e26302244a6d9fa98a
 ARG GIT_PRIMARY_BRANCH=main
-ARG GIT_URL=
+ARG GIT_URL=https://github.com/samarth-sh/dba-self-service-go.git
 ARG HOST_NAME=Samarth-MacBook-Pro.local
 ARG GIT_COMMIT_AUTHOR=samarth-sh
 
