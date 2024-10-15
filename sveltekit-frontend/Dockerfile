@@ -9,6 +9,7 @@ ARG BUILD_ENV=production
 
 WORKDIR /app
 
+# Change ownership of /app to node user
 RUN chown -R node:node /app
 
 # Copy package files first to leverage Docker cache
@@ -20,7 +21,7 @@ USER node
 RUN npm ci
 
 # Copy the rest of the application
-COPY . .
+COPY --chown=node:node . .
 
 RUN echo "Building for ${BUILD_ENV}"
 RUN npm run build:${BUILD_ENV}
