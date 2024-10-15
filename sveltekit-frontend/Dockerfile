@@ -17,7 +17,7 @@ COPY package.json package-lock.json ./
 # Install dependencies
 RUN npm install -g npm@latest
 USER node
-RUN npm install
+RUN npm ci
 
 # Copy the rest of the application
 COPY . .
