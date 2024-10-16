@@ -17,11 +17,11 @@ USER node
 
 RUN echo BUILD_ENV is ${BUILD_ENV}
 RUN npm install
-RUN npm run build:${BUILD_ENV}
+RUN npm run build:$BUILD_ENV
 
 # Stage 2: Create the final runtime image
 # Archive
-FROM node:${NODE_VERSION} as nodejsapp
+FROM node:${NODE_VERSION} AS nodejsapp
 
 ENV PORT=8080
 USER node

@@ -5,7 +5,7 @@ FROM golang:${GO_IMAGE_VER} AS builder
 
 # Set working directory inside the container
 WORKDIR /go/src/app
-
+COPY . /go/src/app
 # Copy necessary files
 COPY go.mod go.sum ./
 RUN go mod download
@@ -14,14 +14,15 @@ RUN go mod download
 COPY . .
 
 # Set build arguments for versioning and metadata
-ARG BUILD_STAMP=$(date +%Y%m%d%H%M%S)
-ARG GIT_COMMIT_ID=2f1aeb4ea80be0f9e7a627e26302244a6d9fa98a
-ARG GIT_PRIMARY_BRANCH=main
-ARG GIT_URL=https://github.com/angel-one/dba-self-service-go.git
-ARG HOST_NAME=Samarth-MacBook-Pro.local
-ARG GIT_COMMIT_AUTHOR=samarth-sh
+ARG BUILD_STAMP
+ARG GIT_COMMIT_ID
+ARG GIT_PRIMARY_BRANCH
+ARG GIT_URL
+ARG HOST_NAME
+ARG GIT_COMMIT_AUTHOR
 
-
+ENV PATH="${PATH}:/sbin"
+RUN apk add --no-cache build-base
 # Run tests (optional but recommended)
 RUN GOOS=linux CGO_ENABLED=1 go test -v -a -tags musl
 
@@ -42,17 +43,19 @@ RUN GOOS=linux CGO_ENABLED=1 go build -a -tags musl -o /go/bin/go-backend \
 FROM 732165046977.dkr.ecr.ap-south-1.amazonaws.com/sre-golang-base-image:3  AS artifact
 
 # Set the service port
-ARG SERVICE_PORT=8080
+ARG SERVICE_PORT
 
 # Set the timezone
 ENV TZ Asia/Calcutta
+#Copy Aritfact
+RUN apk add --no-cache build-base
 
 # Copy the compiled binary from the build stage
 COPY --from=builder /go/bin/go-backend /app/go-backend
 
 # Copy MSSQL stored procedures and user-defined functions
 COPY MSSQL-SP /app/MSSQL-SP
-COPY MSSQL-UDF /app/MSSQL-UDF
+
 
 # Healthcheck and expose port
 HEALTHCHECK NONE

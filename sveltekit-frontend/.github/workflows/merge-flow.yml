@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    branches: [main,dev]
+    paths-ignore:
+      - '**.md'
+      - '.github/**/*.y*l'
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: aws-ec2
+    strategy:
+      matrix:
+        stage: ['uat','prod']   
+      fail-fast: false
+    env:
+      BUILD_ENV: ${{ matrix.stage }} 
+    steps:
+      - name: Clean the workspace
+        uses: docker://alpine:3
+        with:
+          args: /bin/sh -c "rm -rf /github/workspace/.* || rm -rf /github/workspace/*"
+
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          repository: 'angel-one/build-ecs-action'
+          ref: '2.8.0'
+          token: ${{ secrets.SRE_GIT_READ_TOKEN }}
+          path: ./.github/workflows
+          clean: 'false'
+
+      - name: Copy custom action
+        shell: bash
+        run: |
+          cp ./.github/workflows/merge-flow/action.yml ./.github/workflows/
+
+      - name: Run Custom Build action
+        uses: ./.github/workflows # Uses an action in the directory
+        id: image
+        with:
+          MAJOR_VERSION: 1
+          RUN_CODE_UNIT_TEST: 0 #Use flag 1 to enable and 0 to disable
+          REGISTRY: ghcr.io
+          # github.repository as <account>/<repo>
+          DOCKER_BUILD_ARGS: "BUILD_ENV=${{ env.BUILD_ENV }}"
+          IMAGE_NAME: ${{ github.event.repository.name }}
+          ECR_REGISTRY: 732165046977.dkr.ecr.ap-south-1.amazonaws.com
+          ECR_REPO_NAME: ${{ github.event.repository.name }}-${{ env.BUILD_ENV }}
+          SERVICE_PORT: 8080
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXUS_REPO_NAME: ${{ github.event.repository.name }}-${{ env.BUILD_ENV }}
+          SRE_NEXUS_USERNAME: ${{ secrets.SRE_NEXUS_USERNAME }}
+          SRE_NEXUS_PASSWORD: ${{ secrets.SRE_NEXUS_PASSWORD }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.SRE_ECR_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SRE_ECR_AWS_SECRET_ACCESS_KEY }}         
+          RELEASE_TOKEN: ${{ secrets.SRE_GIT_READ_TOKEN }} #Personal access token to create releases
+          TAGGING_ENABLED: 'false'
+          CONTAINER_SCAN: 'false'
+
+      - run: |
+          echo "ECR Image URI for CD ${{ steps.image.outputs.ecr_uri }} "
+          echo "Nexus Image URI for CD ${{ steps.image.outputs.nexus_uri }} "
+        shell: bash
+    outputs:
+      new_tag: ${{ steps.image.outputs.image_version }}
+
+  tag_version:
+    needs: deploy
+    name: "Create Github tag"
+    runs-on: aws-ec2
+    env:
+      new_tag: ${{ needs.deploy.outputs.new_tag }}
+    steps:      
+      - name: Checkout repository ${{ github.event.repository.name }}
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+
+      - name: Creating GIT tag ${{ env.new_tag }} for Build
+        uses: tvdias/github-tagger@v0.0.2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.new_tag }} 
+          commit-sha: ${{ github.sha }}

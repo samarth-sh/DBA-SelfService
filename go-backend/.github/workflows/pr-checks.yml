@@ -1,0 +1,60 @@
+name: PR Flow
+
+on:
+  pull_request:
+    branches: 
+      - main
+      - hotfix-*
+      
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+  
+jobs:
+  pr-checks:
+    name: PR Build
+    runs-on: aws-ec2
+    steps:
+      - name: Clean the workspace
+        uses: docker://alpine:3
+        with:
+          args: /bin/sh -c "rm -rf /github/workspace/.* || rm -rf /github/workspace/*"
+
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+        with:
+          repository: 'angel-one/build-ecs-action'
+          ref: '2.8.0'
+          token: ${{ secrets.SRE_GIT_READ_TOKEN }}
+          path: ./.github/workflows/
+          clean: 'false'
+      
+      - name: Copy custom action
+        shell: bash
+        run: |
+          cp ./.github/workflows/pr-flow/action.yml ./.github/workflows/ 
+        
+      - name: Run Custom Build action
+        uses: ./.github/workflows # Uses an action in the directory
+        id: image
+        with:
+          MAJOR_VERSION: 0
+          # github.repository as <account>/<repo>
+          IMAGE_NAME: ${{ github.event.repository.name }}
+          ECR_REPO_NAME: ${{ github.event.repository.name }}
+          NEXUS_REPO_NAME: ${{ github.event.repository.name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.SRE_ECR_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SRE_ECR_AWS_SECRET_ACCESS_KEY }}
+          SRE_NEXUS_USERNAME: ${{ secrets.SRE_NEXUS_USERNAME }}
+          SRE_NEXUS_PASSWORD: ${{ secrets.SRE_NEXUS_PASSWORD }}
+          
+      - run: |
+          echo "ECR Image URI for CD ${{ steps.image.outputs.ecr_uri }} "
+          echo "Nexus Image URI for CD ${{ steps.image.outputs.nexus_uri }} "
+        shell: bash
