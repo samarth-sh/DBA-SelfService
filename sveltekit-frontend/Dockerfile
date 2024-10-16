@@ -5,25 +5,18 @@
 ARG NODE_VERSION=20-alpine
 FROM node:${NODE_VERSION} AS builder
 
-ARG BUILD_ENV=production
+ARG BUILD_ENV
 
 WORKDIR /app
+COPY . .
 
 # Change ownership of /app to node user
 RUN chown -R node:node /app
 
-# Copy package files first to leverage Docker cache
-COPY package.json package-lock.json ./
-
-# Install dependencies
-RUN npm install -g npm@latest
 USER node
-RUN npm ci
 
-# Copy the rest of the application
-COPY --chown=node:node . .
-
-RUN echo "Building for ${BUILD_ENV}"
+RUN echo BUILD_ENV is ${BUILD_ENV}
+RUN npm install
 RUN npm run build:${BUILD_ENV}
 
 # Stage 2: Create the final runtime image
@@ -32,11 +25,9 @@ FROM node:${NODE_VERSION} as nodejsapp
 
 ENV PORT=8080
 USER node
-COPY --chown=node:node --from=builder /app/build /app/build
-COPY --chown=node:node --from=builder /app/package.json /app/package-lock.json ./
+COPY --chown=node:node --from=builder /app /app
 
-# Install only production dependencies
-RUN npm ci --only=production
+EXPOSE 8080
 
 WORKDIR /app
 
