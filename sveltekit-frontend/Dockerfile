@@ -15,7 +15,7 @@ RUN chown -R node:node /app
 
 USER node
 
-RUN echo BUILD_ENV is ${BUILD_ENV}
+RUN echo BUILD_ENV is $BUILD_ENV
 RUN npm install
 RUN npm run build:$BUILD_ENV
 
@@ -30,8 +30,6 @@ COPY --chown=node:node --from=builder /app /app
 EXPOSE 8080
 
 WORKDIR /app
-
-EXPOSE ${PORT}
 
 # Create entrypoint script
 RUN echo -e "#!/bin/sh\n node build/index.js" > entrypoint.sh && \

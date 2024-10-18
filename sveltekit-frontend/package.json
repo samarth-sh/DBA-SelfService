@@ -5,6 +5,12 @@
 	"scripts": {
 		"dev": "vite dev --port 8080",
 		"build": "vite build",
+		"dev:uat": "vite dev --host --mode uat",
+		"dev:cug": "vite dev --host --mode cug",
+		"dev:prod": "vite dev --host --mode prod",
+		"build:uat": "vite build --mode uat",
+		"build:cug": "vite build --mode cug",
+		"build:prod": "vite build --mode prod",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"

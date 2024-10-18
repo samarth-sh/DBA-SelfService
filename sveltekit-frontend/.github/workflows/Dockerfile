@@ -1,3 +1,4 @@
+# Container image that runs your code
 FROM alpine:3.10
-# dummy file to fix go action post failure 
-RUN pwd
+#This is needed for golang docker build post action
+RUN echo "action completed"
